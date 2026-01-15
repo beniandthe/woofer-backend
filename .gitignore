@@ -16,5 +16,5 @@ media/
 
 # OS / IDE
 .DS_Store
-.vscode/
+.vs/
 .idea/
