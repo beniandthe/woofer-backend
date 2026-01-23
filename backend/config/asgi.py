@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 import os
 
 from dotenv import load_dotenv
-load_dotenv(".env.dev")
+load_dotenv(".env.dev", override=False)
 
 from django.core.asgi import get_asgi_application
 
