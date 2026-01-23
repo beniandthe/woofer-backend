@@ -75,7 +75,7 @@ TEMPLATES = [
     },
 ]
 
-TEMPLATES[0]["DIRS"] = [os.path.join(BASE_DIR, "app", "templates")]
+
 
 
 WSGI_APPLICATION = 'woofer_web.wsgi.application'
