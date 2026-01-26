@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "data": {
+    "user_id": "uuid",
+    "home_type": "APARTMENT",
+    "has_kids": false,
+    "has_dogs": false,
+    "has_cats": true,
+    "activity_level": "MED",
+    "experience_level": "SOME",
+    "preferences": {
+      "preferred_sizes": ["M", "L"],
+      "preferred_age_groups": ["ADULT"],
+      "max_distance_miles": 50,
+      "willing_special_needs": false,
+      "hard_constraints": ["GOOD_WITH_CATS"]
+    }
+  },
+  "meta": {},
+  "request_id": "uuid",
+  "timestamp": "iso8601"
+}
