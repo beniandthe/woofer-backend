@@ -1,0 +1,43 @@
+from rest_framework import serializers
+from adoption.models import Pet
+
+class PetDetailSerializer(serializers.ModelSerializer):
+    pet_id = serializers.UUIDField(read_only=True)
+    organization = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Pet
+        fields = [
+            "pet_id",
+            "source",
+            "external_id",
+            "name",
+            "species",
+            "age_group",
+            "size",
+            "sex",
+            "breed_primary",
+            "breed_secondary",
+            "is_mixed",
+            "photos",
+            "raw_description",
+            "ai_description",
+            "temperament_tags",
+            "special_needs_flags",
+            "listed_at",
+            "last_seen_at",
+            "status",
+            "organization",
+        ]
+
+    def get_organization(self, obj):
+        org = obj.organization
+        return {
+            "organization_id": org.organization_id,
+            "source": org.source,
+            "source_org_id": org.source_org_id,
+            "name": org.name,
+            "contact_email": org.contact_email,
+            "location": org.location,
+            "is_active": org.is_active,
+        }
