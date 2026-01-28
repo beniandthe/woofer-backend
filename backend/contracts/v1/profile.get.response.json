@@ -1,7 +1,7 @@
 {
   "ok": true,
   "data": {
-    "user_id": "uuid",
+    "user_id": "00000000-0000-0000-0000-000000000001",
     "home_type": "APARTMENT",
     "has_kids": false,
     "has_dogs": false,
@@ -17,6 +17,7 @@
     }
   },
   "meta": {},
-  "request_id": "uuid",
-  "timestamp": "iso8601"
+  "request_id": "00000000-0000-0000-0000-0000000000ab",
+  "timestamp": "2026-01-28T00:00:00Z"
 }
+

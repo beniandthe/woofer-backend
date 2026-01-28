@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "data": {
+    "pet_id": "00000000-0000-0000-0000-000000000101",
+    "source": "DEMO",
+    "external_id": "demo-pet-1",
+    "name": "Bella",
+    "species": "DOG",
+    "age_group": "ADULT",
+    "size": "M",
+    "sex": "FEMALE",
+    "breed_primary": null,
+    "breed_secondary": null,
+    "is_mixed": false,
+    "photos": ["https://example.com/photo1.jpg"],
+    "raw_description": "Raw description",
+    "ai_description": "AI description",
+    "temperament_tags": ["GENTLE"],
+    "special_needs_flags": [],
+    "listed_at": "2026-01-28T00:00:00Z",
+    "last_seen_at": null,
+    "status": "ACTIVE",
+    "organization": {
+      "organization_id": "00000000-0000-0000-0000-000000000201",
+      "source": "DEMO",
+      "source_org_id": "demo-org-1",
+      "name": "Example Rescue",
+      "contact_email": "demo@example.com",
+      "location": "Los Angeles, CA",
+      "is_active": true
+    }
+  },
+  "meta": {},
+  "request_id": "00000000-0000-0000-0000-0000000000ad",
+  "timestamp": "2026-01-28T00:00:00Z"
+}

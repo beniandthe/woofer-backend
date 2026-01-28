@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "data": {
+    "user_id": "00000000-0000-0000-0000-000000000001",
+    "username": "demo_user",
+    "email": "demo@example.com",
+    "auth_provider_id": "demo-auth-provider-id",
+    "is_active": true
+  },
+  "meta": {},
+  "request_id": "00000000-0000-0000-0000-0000000000aa",
+  "timestamp": "2026-01-28T00:00:00Z"
+}

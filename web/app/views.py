@@ -1,7 +1,9 @@
+import os
 from django.shortcuts import render
 from .api_client import api_get, WooferAPIError
 
 # Create your views here.
+print("WOOFER_DEV_USER =", os.getenv("WOOFER_DEV_USER"))
 
 def home(request):
     """
@@ -9,8 +11,9 @@ def home(request):
     Calls backend /api/health and prints the enveloped response.
     """
     try:
-        api_result = api_get("/api/health")
+        api_result = api_get("/api/v1/pets?limit=5")
         return render(request, "home.html", {"api_result": api_result})
     except WooferAPIError as e:
         # Canon: display API errors verbatim
         return render(request, "error.html", {"status_code": e.status_code, "payload": e.payload}, status=502)
+    

@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "pet_id": "00000000-0000-0000-0000-000000000101",
+        "name": "Bella",
+        "age_group": "ADULT",
+        "size": "M",
+        "photos": ["https://example.com/photo1.jpg"],
+        "ai_description": "Gentle, curious, loves walks.",
+        "temperament_tags": ["GENTLE", "CURIOUS"],
+        "organization": {
+          "organization_id": "00000000-0000-0000-0000-000000000201",
+          "name": "Example Rescue",
+          "location": "Los Angeles, CA"
+        }
+      }
+    ],
+    "next_cursor": "opaque_cursor"
+  },
+  "meta": {},
+  "request_id": "00000000-0000-0000-0000-0000000000ac",
+  "timestamp": "2026-01-28T00:00:00Z"
+}
