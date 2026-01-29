@@ -1,14 +1,35 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Woofer Web (Disposable)</title>
-  </head>
-  <body>
-    <h1>Woofer Web (Disposable Client)</h1>
-    <p>This UI is replaceable. All behavior lives in the backend API.</p>
+<h2>Pets Feed</h2>
 
-    <h2>Backend API /api/health (enveloped)</h2>
-    <pre>{{ api_result|safe }}</pre>
-  </body>
-</html>
+{% if api_result.ok %}
+  {% with items=api_result.data.items %}
+    {% if items %}
+      <ul>
+        {% for pet in items %}
+          <li style="margin-bottom: 12px;">
+            <strong>{{ pet.name }}</strong>
+            {% if pet.organization %}
+              — <em>{{ pet.organization.name }}</em>
+            {% endif %}
+
+            {% if pet.why_shown %}
+              <div style="margin-top: 6px;">
+                <small>Why shown:</small>
+                {% for reason in pet.why_shown %}
+                  <span style="display:inline-block; padding:2px 6px; margin:2px; border:1px solid #999; border-radius:10px;">
+                    {{ reason }}
+                  </span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No pets returned.</p>
+    {% endif %}
+  {% endwith %}
+{% else %}
+  <p>API returned ok=false</p>
+{% endif %}

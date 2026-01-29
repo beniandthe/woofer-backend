@@ -10,12 +10,12 @@
         "photos": ["https://example.com/photo1.jpg"],
         "ai_description": "Gentle, curious, loves walks.",
         "temperament_tags": ["GENTLE", "CURIOUS"],
-	"why_shown": [],
         "organization": {
           "organization_id": "00000000-0000-0000-0000-000000000201",
           "name": "Example Rescue",
           "location": "Los Angeles, CA"
-        }
+        },
+	"why_shown": ["LONG_STAY_BOOST"]
       }
     ],
     "next_cursor": "opaque_cursor"

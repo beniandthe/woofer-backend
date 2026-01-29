@@ -3,7 +3,6 @@ from django.shortcuts import render
 from .api_client import api_get, WooferAPIError
 
 # Create your views here.
-print("WOOFER_DEV_USER =", os.getenv("WOOFER_DEV_USER"))
 
 def home(request):
     """
