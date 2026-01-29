@@ -2,8 +2,11 @@ import json
 from django.test import TestCase
 from rest_framework.test import APIClient
 from accounts.models import User
-from adoption.models import Organization, Pet
+from adoption.models import Organization, Pet, Interest
+from django.test import override_settings
+from adoption.models import Interest
 from django.utils import timezone
+
 
 class InterestsTests(TestCase):
     def setUp(self):
@@ -61,3 +64,32 @@ class InterestsTests(TestCase):
         items = payload["data"]["items"]
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["pet"]["pet_id"], str(self.pet.pet_id))
+
+    def test_interest_create_marks_notification_sent(self):
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
+        resp = client.post(f"/api/v1/pets/{self.pet.pet_id}/interest")
+        self.assertEqual(resp.status_code, 200)
+
+        payload = json.loads(resp.content.decode("utf-8"))
+        self.assertTrue(payload["ok"])
+        interest_id = payload["data"]["interest_id"]
+
+        interest = Interest.objects.get(interest_id=interest_id)
+        self.assertEqual(interest.notification_status, Interest.NotificationStatus.SENT)
+
+    @override_settings(WOOFER_NOTIFICATIONS_FORCE_FAIL=True)
+    def test_notification_failure_does_not_break_interest_create(self):
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
+        resp = client.post(f"/api/v1/pets/{self.pet.pet_id}/interest")
+        self.assertEqual(resp.status_code, 200)
+
+        payload = json.loads(resp.content.decode("utf-8"))
+        self.assertTrue(payload["ok"])
+        interest_id = payload["data"]["interest_id"]
+
+        interest = Interest.objects.get(interest_id=interest_id)
+        self.assertEqual(interest.notification_status, Interest.NotificationStatus.FAILED)

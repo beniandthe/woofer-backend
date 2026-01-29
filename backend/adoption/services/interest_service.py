@@ -1,5 +1,7 @@
 from django.db import transaction, IntegrityError
 from adoption.models import Interest, Pet
+from adoption.services.notification_service import NotificationService
+
 
 class InterestService:
     @staticmethod
@@ -15,6 +17,8 @@ class InterestService:
         try:
             with transaction.atomic():
                 interest = Interest.objects.create(user=user, pet=pet)
+                # Non-blocking notification
+                NotificationService.notify_interest_created(interest)
                 return interest
         except IntegrityError:
             # Uniqueness constraint (user, pet) ensures dedupe
