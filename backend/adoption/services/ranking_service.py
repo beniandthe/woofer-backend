@@ -73,3 +73,9 @@ class RankingService:
         # Deterministic ordering: score DESC, then pet_id DESC
         ranked.sort(key=lambda rp: (rp.score, str(rp.pet.pet_id)), reverse=True)
         return ranked
+
+    @staticmethod
+    def reasons_for_pet(pet: Pet) -> List[str]:
+        _, reasons = RankingService.score_pet(pet)
+        return reasons
+

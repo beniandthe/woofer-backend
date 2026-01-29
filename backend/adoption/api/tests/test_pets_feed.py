@@ -97,5 +97,8 @@ class PetsFeedTests(TestCase):
         self.assertTrue(payload["ok"])
 
         items = payload["data"]["items"]
+        self.assertIn("why_shown", items[0])
+        self.assertIn("LONG_STAY_BOOST", items[0]["why_shown"])
+
         # Top item should be boosted old pet
         self.assertEqual(items[0]["pet_id"], str(p_old.pet_id))

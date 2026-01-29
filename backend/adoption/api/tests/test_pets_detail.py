@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from adoption.models import Organization, Pet
 from django.utils import timezone
+from adoption.models import RiskClassification
 import uuid
 
 class PetDetailTests(TestCase):
@@ -31,6 +32,7 @@ class PetDetailTests(TestCase):
             temperament_tags=["CALM"],
             special_needs_flags=[],
         )
+        RiskClassification.objects.create(pet=self.pet, is_long_stay=True)
 
     def test_detail_returns_enveloped_pet(self):
         client = APIClient()
@@ -47,6 +49,8 @@ class PetDetailTests(TestCase):
         self.assertEqual(data["name"], "Pet 1")
         self.assertIn("organization", data)
         self.assertEqual(data["organization"]["name"], "Test Org")
+        self.assertIn("why_shown", data)
+        self.assertIn("LONG_STAY_BOOST", data["why_shown"])
 
     def test_detail_404_is_enveloped_error(self):
         client = APIClient()

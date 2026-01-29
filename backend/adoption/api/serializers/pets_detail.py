@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from adoption.models import Pet
+from adoption.services.ranking_service import RankingService
 
 class PetDetailSerializer(serializers.ModelSerializer):
     pet_id = serializers.UUIDField(read_only=True)
     organization = serializers.SerializerMethodField()
+    why_shown = serializers.SerializerMethodField()
 
     class Meta:
         model = Pet
@@ -27,6 +29,7 @@ class PetDetailSerializer(serializers.ModelSerializer):
             "listed_at",
             "last_seen_at",
             "status",
+            "why_shown",
             "organization",
         ]
 
@@ -41,3 +44,6 @@ class PetDetailSerializer(serializers.ModelSerializer):
             "location": org.location,
             "is_active": org.is_active,
         }
+
+    def get_why_shown(self, obj):
+        return RankingService.reasons_for_pet(obj)
