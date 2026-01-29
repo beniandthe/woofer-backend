@@ -1,10 +1,12 @@
 from typing import Optional, Tuple, List
-from django.db.models import Q
 from adoption.models import Pet
-from adoption.services.cursor import decode_cursor, encode_cursor
+from adoption.services.ranking_service import RankingService
+from adoption.services.ranked_cursor import decode_rank_cursor, encode_rank_cursor
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 50
+MAX_CANDIDATES = 500  # MVP guardrail
+
 
 class PetFeedService:
     @staticmethod
@@ -12,31 +14,29 @@ class PetFeedService:
         lim = limit or DEFAULT_LIMIT
         lim = min(max(lim, 1), MAX_LIMIT)
 
-        qs = (
+        # Candidate set: stable deterministic DB fetch
+        candidates = list(
             Pet.objects
             .select_related("organization")
             .filter(status=Pet.Status.ACTIVE)
-            .order_by("-listed_at", "-pet_id")
+            .order_by("-listed_at", "-pet_id")[:MAX_CANDIDATES]
         )
 
+        ranked = RankingService.rank(candidates)  # score DESC, pet_id DESC
+
         if cursor:
-            last_listed_at, last_pet_id = decode_cursor(cursor)
+            last_score, last_pet_id = decode_rank_cursor(cursor)
+            ranked = [
+                rp for rp in ranked
+                if (rp.score < last_score) or (rp.score == last_score and str(rp.pet.pet_id) < last_pet_id)
+            ]
 
-            # Sorting is DESC. "Next page" means records strictly after the cursor in this ordering.
-            # (listed_at < last_listed_at) OR (listed_at == last_listed_at AND pet_id < last_pet_id)
-            if last_listed_at is None:
-                qs = qs.filter(pet_id__lt=last_pet_id)
-            else:
-                qs = qs.filter(
-                    Q(listed_at__lt=last_listed_at) |
-                    (Q(listed_at=last_listed_at) & Q(pet_id__lt=last_pet_id))
-                )
+        page = ranked[:lim]
+        pets = [rp.pet for rp in page]
 
-        items = list(qs[:lim])
+        if len(page) < lim:
+            return pets, None
 
-        if len(items) < lim:
-            return items, None
-
-        last = items[-1]
-        next_cursor = encode_cursor(last.listed_at, str(last.pet_id))
-        return items, next_cursor
+        last = page[-1]
+        next_cursor = encode_rank_cursor(last.score, str(last.pet.pet_id))
+        return pets, next_cursor
