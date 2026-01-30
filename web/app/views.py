@@ -33,16 +33,27 @@ def home(request):
         "blurb": "This pet was returned and may need extra visibility to find a stable home."
     },
 }
+        liked = api_get("/api/v1/interests")
+        liked_ids = set()
+        for item in liked.get("data", {}).get("items", []):
+            pet = item.get("pet", {})
+            if pet.get("pet_id"):
+                liked_ids.add(pet["pet_id"])
 
-        return render(request, "home.html", {"api_result": api_result, "why_shown_copy": WHY_SHOWN_COPY})
+        return render(request, "home.html", {"api_result": api_result, "liked_ids": liked_ids, "why_shown_copy": WHY_SHOWN_COPY})
     except WooferAPIError as e:
         # Canon: display API errors verbatim
         return render(request, "error.html", {"status_code": e.status_code, "payload": e.payload}, status=502)
     
 def like_pet(request, pet_id):
     try:
+        before = api_get("/api/v1/interests")
+        before_ids = {i.get("pet", {}).get("pet_id") for i in before.get("data", {}).get("items", [])}
+
         api_post(f"/api/v1/pets/{pet_id}/interest", {})
-        return redirect("home")
+        if str(pet_id) in before_ids:
+            return redirect("/?msg=already_liked")
+        return redirect("/?msg=liked")
     except WooferAPIError as e:
         return render(
             request,

@@ -7,6 +7,12 @@
     </small>
 </p>
 
+{% if request.GET.msg == "liked" %}
+  <p><strong>Liked.</strong> The organization has been notified.</p>
+{% elif request.GET.msg == "already_liked" %}
+  <p><strong>Already liked.</strong></p>
+{% endif %}
+
 <h1>Woofer</h1>
 <p>
     Browse adoptable pets from local rescues.
@@ -25,10 +31,16 @@
         <strong>{{ pet.name }}</strong>
         {% if pet.organization %}
         — <em>{{ pet.organization.name }}</em>
+        {% if pet.pet_id in liked_ids %}
+        <div style="margin-top: 6px;">
+            <small><strong>Liked ✓</strong></small>
+        </div>
+        {% else %}
         <form method="post" action="{% url 'like_pet' pet.pet_id %}">
             {% csrf_token %}
             <button type="submit">Like</button>
         </form>
+        {% endif %}
         <form method="post" action="{% url 'apply_pet' pet.pet_id pet.organization.organization_id %}">
             {% csrf_token %}
             <button type="submit">Apply</button>
