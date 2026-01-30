@@ -1,10 +1,17 @@
 <!doctype html>
 <html>
+{% load woofer_extras %}
+<p style="margin-top: 10px;">
+    <small>
+        We sometimes boost pets who may be overlooked or have waited longer, so every pet gets a fair chance to be seen.
+    </small>
+</p>
+
 <h1>Woofer</h1>
 <p>
-  Browse adoptable pets from local rescues.
-  When you like a pet, we’ll notify the organization.
-  Applying does not guarantee adoption — rescues follow up directly.
+    Browse adoptable pets from local rescues.
+    When you like a pet, we’ll notify the organization.
+    Applying does not guarantee adoption — rescues follow up directly.
 </p>
 
 <h2>Pets Feed</h2>
@@ -12,39 +19,55 @@
 {% if api_result.ok %}
   {% with items=api_result.data.items %}
     {% if items %}
-      <ul>
-        {% for pet in items %}
-          <li style="margin-bottom: 12px;">
-            <strong>{{ pet.name }}</strong>
-            {% if pet.organization %}
-              — <em>{{ pet.organization.name }}</em>
-	    <form method="post" action="{% url 'like_pet' pet.pet_id %}">
-  		{% csrf_token %}
-  		<button type="submit">Like</button>
-	    </form>
-	    <form method="post" action="{% url 'apply_pet' pet.pet_id pet.organization.organization_id %}">
-  		{% csrf_token %}
-  		<button type="submit">Apply</button>
-	    </form>
-            {% endif %}
+<ul>
+    {% for pet in items %}
+    <li style="margin-bottom: 12px;">
+        <strong>{{ pet.name }}</strong>
+        {% if pet.organization %}
+        — <em>{{ pet.organization.name }}</em>
+        <form method="post" action="{% url 'like_pet' pet.pet_id %}">
+            {% csrf_token %}
+            <button type="submit">Like</button>
+        </form>
+        <form method="post" action="{% url 'apply_pet' pet.pet_id pet.organization.organization_id %}">
+            {% csrf_token %}
+            <button type="submit">Apply</button>
+        </form>
+        {% endif %}
 
-            {% if pet.why_shown %}
-              <div style="margin-top: 6px;">
-                <small>Why shown:</small>
+        {% if pet.why_shown %}
+        <div style="margin-top: 6px;">
+            <small><strong>Why you’re seeing this:</strong></small>
+
+            <div style="margin-top: 6px;">
                 {% for reason in pet.why_shown %}
-                  <span style="display:inline-block; padding:2px 6px; margin:2px; border:1px solid #999; border-radius:10px;">
-                    {{ reason }}
-                  </span>
+                {% with info=why_shown_copy|get_item:reason %}
+                <span style="display:inline-block; padding:2px 8px; margin:2px; border:1px solid #999; border-radius:999px;">
+                    {{ info.label|default:reason }}
+                </span>
+                {% endwith %}
                 {% endfor %}
-              </div>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+            </div>
+
+            <div style="margin-top: 6px;">
+                {% for reason in pet.why_shown %}
+                {% with info=why_shown_copy|get_item:reason %}
+                <div style="margin: 2px 0;">
+                    <small>{{ info.blurb|default:"" }}</small>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </li>
+    {% endfor %}
+</ul>
     {% else %}
-      <p>No pets returned.</p>
+<p>No pets returned.</p>
     {% endif %}
   {% endwith %}
 {% else %}
-  <p>API returned ok=false</p>
+<p>API returned ok=false</p>
 {% endif %}

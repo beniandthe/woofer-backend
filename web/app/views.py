@@ -11,7 +11,30 @@ def home(request):
     """
     try:
         api_result = api_get("/api/v1/pets?limit=5")
-        return render(request, "home.html", {"api_result": api_result})
+        WHY_SHOWN_COPY = {
+    "LONG_STAY_BOOST": {
+        "label": "Waiting longer",
+        "blurb": "This pet has been listed for longer than most and deserves extra visibility."
+    },
+    "SENIOR_BOOST": {
+        "label": "Senior",
+        "blurb": "Senior pets are often overlooked, so we help them get seen."
+    },
+    "MEDICAL_BOOST": {
+        "label": "Medical needs",
+        "blurb": "Pets with medical needs can be harder to place, so we give them a boost."
+    },
+    "OVERLOOKED_GROUP_BOOST": {
+        "label": "Often overlooked",
+        "blurb": "Some pets are historically under-selected, so we correct for that bias."
+    },
+    "RECENTLY_RETURNED_BOOST": {
+        "label": "Recently returned",
+        "blurb": "This pet was returned and may need extra visibility to find a stable home."
+    },
+}
+
+        return render(request, "home.html", {"api_result": api_result, "why_shown_copy": WHY_SHOWN_COPY})
     except WooferAPIError as e:
         # Canon: display API errors verbatim
         return render(request, "error.html", {"status_code": e.status_code, "payload": e.payload}, status=502)
