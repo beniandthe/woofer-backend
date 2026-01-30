@@ -1,5 +1,12 @@
 <!doctype html>
 <html>
+<h1>Woofer</h1>
+<p>
+  Browse adoptable pets from local rescues.
+  When you like a pet, we’ll notify the organization.
+  Applying does not guarantee adoption — rescues follow up directly.
+</p>
+
 <h2>Pets Feed</h2>
 
 {% if api_result.ok %}
@@ -11,6 +18,14 @@
             <strong>{{ pet.name }}</strong>
             {% if pet.organization %}
               — <em>{{ pet.organization.name }}</em>
+	    <form method="post" action="{% url 'like_pet' pet.pet_id %}">
+  		{% csrf_token %}
+  		<button type="submit">Like</button>
+	    </form>
+	    <form method="post" action="{% url 'apply_pet' pet.pet_id pet.organization.organization_id %}">
+  		{% csrf_token %}
+  		<button type="submit">Apply</button>
+	    </form>
             {% endif %}
 
             {% if pet.why_shown %}
