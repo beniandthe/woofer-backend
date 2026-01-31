@@ -1,4 +1,8 @@
 from .base import *  # noqa
+import os
+
+
+WOOFER_NOTIFICATIONS_FORCE_FAIL = os.getenv("WOOFER_NOTIFICATIONS_FORCE_FAIL") == "1"
 
 DEBUG = True
 WOOFER_DEV_AUTH = True
