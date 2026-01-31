@@ -28,7 +28,7 @@
     {% if items %}
       <ul>
         {% for pet in items %}
-          <li style="margin-bottom: 12px;">
+          <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
             <strong>{{ pet.name }}</strong>
             {% if pet.organization %}
               — <em>{{ pet.organization.name }}</em>
@@ -38,7 +38,8 @@
                   <small><strong>Liked ✓</strong></small>
                 </div>
               {% else %}
-                <form method="post" action="{% url 'like_pet' pet.pet_id %}">
+		<div style="display:flex; gap:8px; margin-top:8px;">
+                 <form method="post" action="{% url 'like_pet' pet.pet_id %}">
                   {% csrf_token %}
                   <button type="submit">Like</button>
                 </form>
@@ -48,10 +49,11 @@
                 {% csrf_token %}
                 <button type="submit">Apply</button>
               </form>
+	     </div>
             {% endif %}
 
             {% if pet.why_shown %}
-              <div style="margin-top: 6px;">
+              <div style="margin-top: 8px; opacity: 0.9;">
                 <small><strong>Why you’re seeing this:</strong></small>
 
                 <div style="margin-top: 6px;">

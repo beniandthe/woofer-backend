@@ -5,10 +5,10 @@
     <title>Woofer Web - API Error</title>
   </head>
   <body>
-    <h1>API Error</h1>
-    <p>Status: {{ status_code }}</p>
-    <h2>Payload (verbatim)</h2>
-    <pre>{{ payload|safe }}</pre>
+    <h2>API Error</h2>
+	<p>We couldn’t complete your request. Details below (verbatim):</p>
+	<p><strong>Status:</strong> {{ status_code }}</p>
+	<pre>{{ payload }}</pre>
   </body>
 
 <p><a href="{% url 'home' %}">Back to pets</a></p>
