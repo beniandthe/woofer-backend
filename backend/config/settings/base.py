@@ -19,6 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 
