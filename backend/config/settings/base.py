@@ -23,6 +23,10 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 
+RESCUEGROUPS_API_KEY = os.getenv("RESCUEGROUPS_API_KEY", "")
+RESCUEGROUPS_API_BASE_URL = os.getenv("RESCUEGROUPS_API_BASE_URL", "https://api.rescuegroups.org/v5")
+
+
 
 ALLOWED_HOSTS = [
     h.strip()
