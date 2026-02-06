@@ -63,12 +63,23 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.NOTICE("Ingest starting..."))
         self.stdout.write(f"  provider={provider} limit={limit} org_id={org_id or 'ALL'} dry_run={dry_run}")
-
-        # 1) Fetch provider-normalized records
-        org_records = list(client.iter_orgs(limit=500 if org_id is None else 10, org_id=org_id))
+        # 1) Fetch provider-normalized pets first (they determine which orgs we need)
         pet_records = list(client.iter_pets(limit=limit, org_id=org_id))
 
-        self.stdout.write(self.style.NOTICE(f"Fetched provider records: orgs={len(org_records)} pets={len(pet_records)}"))
+        # Collect the unique org ids referenced by those pets
+        needed_org_ids = sorted({p.external_org_id for p in pet_records if p.external_org_id})
+
+        # Fetch only the orgs we actually need
+        org_records = []
+        for oid in needed_org_ids:
+            org_records.extend(list(client.iter_orgs(limit=1, org_id=oid)))
+
+        self.stdout.write(
+            self.style.NOTICE(
+                f"Fetched provider records: orgs={len(org_records)} pets={len(pet_records)} "
+                f"(unique_org_ids={len(needed_org_ids)})"
+            )
+        )
 
         # 2) Map to canonical dicts
         org_dicts = [canonical_org_dict(o) for o in org_records]
@@ -104,4 +115,5 @@ class Command(BaseCommand):
             f"  risk_backfilled={risk_count}\n"
             f"  mode={'DRY_RUN' if dry_run else 'WRITE'}\n"
         )
+
 

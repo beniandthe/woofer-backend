@@ -65,6 +65,8 @@ def canonical_org_dict(org: ProviderOrg) -> Dict[str, Any]:
         "is_active": True,
         # raw provider payload should NOT be written to canonical models unless canon says so
     }
+  
+   
 
 
 def canonical_pet_dict(pet: ProviderPet) -> Dict[str, Any]:
@@ -73,9 +75,9 @@ def canonical_pet_dict(pet: ProviderPet) -> Dict[str, Any]:
       key: (source, external_id)
     """
     return {
-        "source": pet.provider.upper(),          # e.g. "RESCUEGROUPS"
+        "source": pet.provider.upper(),
         "external_id": pet.external_pet_id,
-        "organization_source_org_id": pet.external_org_id,  # link via (source, source_org_id)
+        "organization_source_org_id": pet.external_org_id,
         "name": pet.name or "Unknown",
         "species": _normalize_species(pet.species),
         "age_group": _str(pet.age_group),
@@ -88,7 +90,8 @@ def canonical_pet_dict(pet: ProviderPet) -> Dict[str, Any]:
         "raw_description": _str(pet.raw_description) or "",
         "listed_at": _parse_iso_dt(pet.listed_at_iso),
         "status": _normalize_status(pet.status),
-    }
+        }
+  
 
 
 # ---------- registry (for ingest_provider later) ----------

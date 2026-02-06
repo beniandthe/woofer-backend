@@ -108,10 +108,10 @@ class RescueGroupsClient(ProviderClient):
                 params={
                     "limit": chunk,
                     "page": page,
-                    "include": "pictures",
-                    "fields[animals]": "name,descriptionText,sex,sizeGroup,ageGroup,isBreedMixed,breedPrimary,breedSecondary,updatedDate,createdDate,availableDate,pictureThumbnailUrl,pictureCount",
-                },
-            )
+                    "include": "pictures,orgs",
+                    "fields[animals]": "name,descriptionText,sex,sizeGroup,ageGroup,isBreedMixed,breedPrimary,breedSecondary,updatedDate,createdDate,availableDate,pictureThumbnailUrl,pictureCount,orgs",
+                    },
+                )
 
             pets = self._parse_animals(payload)
             if not pets:
@@ -186,9 +186,17 @@ class RescueGroupsClient(ProviderClient):
                 continue
             attrs = row.get("attributes") or {}
             rel = row.get("relationships") or {}
-
+            
             external_org_id = None
-            org_rel = rel.get("orgs") or rel.get("org")  # defensive
+            org_rel = (
+                rel.get("orgs")
+                or rel.get("org")
+                or rel.get("organization")
+                or rel.get("organizations")
+                or rel.get("rescues")
+                or rel.get("rescue")
+                or rel.get("shelter")
+            )
             if isinstance(org_rel, dict):
                 org_data = org_rel.get("data")
                 if isinstance(org_data, list):
