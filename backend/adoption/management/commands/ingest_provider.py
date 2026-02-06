@@ -12,6 +12,8 @@ from adoption.services.provider_mappers.base import canonical_org_dict, canonica
 from adoption.services.ingestion_service import IngestionService
 from adoption.services.risk_backfill_service import RiskBackfillService
 
+from adoption.models import ProviderSyncState
+from django.utils import timezone
 
 class DryRunRollback(Exception):
     """Used to force rollback in dry-run mode while still exercising write code paths."""
@@ -44,8 +46,16 @@ class Command(BaseCommand):
             default=None,
             help="Optional external org id to scope ingestion.",
         )
+        parser.add_argument(
+            "--mode",
+            type=str,
+            choices=["full", "incremental"],
+            default="full",
+            help="Ingestion mode. Incremental is recorded but behaves like full for now.",
+        )
 
     def handle(self, *args, **options):
+        mode = options["mode"].upper()
         provider_raw = options["provider"].strip().lower()
         limit: int = options["limit"]
         dry_run: bool = options["dry_run"]
@@ -60,6 +70,13 @@ class Command(BaseCommand):
             client = get_provider_client(provider)
         except Exception as e:
             raise CommandError(str(e))
+
+        sync_state, _ = ProviderSyncState.objects.get_or_create(provider=provider.upper())
+        sync_state.last_run_started_at = timezone.now()
+        sync_state.last_mode = mode
+
+        if not dry_run:
+            sync_state.save(update_fields=["last_run_started_at", "last_mode"])
 
         self.stdout.write(self.style.NOTICE("Ingest starting..."))
         self.stdout.write(f"  provider={provider} limit={limit} org_id={org_id or 'ALL'} dry_run={dry_run}")
@@ -102,6 +119,9 @@ class Command(BaseCommand):
         risk_count = RiskBackfillService.backfill_all_active()
 
         self.stdout.write(self._format_result(result, risk_count, dry_run=False))
+        sync_state.last_run_finished_at = timezone.now()
+        sync_state.last_success_at = sync_state.last_run_finished_at
+        sync_state.save(update_fields=["last_run_finished_at", "last_success_at"])
         self.stdout.write(self.style.SUCCESS("Ingest complete."))
 
     def _format_result(self, result, risk_count: int, dry_run: bool) -> str:

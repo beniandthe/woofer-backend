@@ -1,6 +1,8 @@
 import uuid
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
 
 class Organization(models.Model):
     organization_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -170,3 +172,34 @@ class VisibilityScore(models.Model):
     final_score = models.FloatField(default=0.0)
 
     computed_at = models.DateTimeField(auto_now=True)
+
+
+class ProviderSyncState(models.Model):
+    """
+    Tracks ingestion lifecycle state per provider.
+    Canon: lightweight, auditable, no provider schema leakage.
+    """
+
+    PROVIDER_CHOICES = [
+        ("RESCUEGROUPS", "RescueGroups"),
+        # future providers go here
+    ]
+
+    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES, unique=True)
+
+    last_run_started_at = models.DateTimeField(null=True, blank=True)
+    last_run_finished_at = models.DateTimeField(null=True, blank=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+
+    last_mode = models.CharField(
+        max_length=16,
+        choices=[("FULL", "Full"), ("INCREMENTAL", "Incremental")],
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.provider} sync state"

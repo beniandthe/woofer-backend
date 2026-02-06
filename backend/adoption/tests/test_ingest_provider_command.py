@@ -5,6 +5,7 @@ from django.test import TestCase
 from providers.base import ProviderOrg, ProviderPet
 from adoption.models import Organization, Pet
 
+from adoption.models import ProviderSyncState
 
 class FakeProvider:
     provider_name = "rescuegroups"
@@ -36,6 +37,21 @@ class FakeProvider:
             status="available",
             raw={"id": "P1"},
         )
+
+    def test_sync_state_persisted_on_write(self, _mock_factory):
+        call_command("ingest_provider", "--provider", "rescuegroups", "--limit", "1")
+
+        state = ProviderSyncState.objects.get(provider="RESCUEGROUPS")
+        self.assertIsNotNone(state.last_run_started_at)
+        self.assertIsNotNone(state.last_run_finished_at)
+        self.assertIsNotNone(state.last_success_at)
+        self.assertEqual(state.last_mode, "FULL")
+
+    def test_sync_state_not_persisted_on_dry_run(self, _mock_factory):
+        call_command("ingest_provider", "--provider", "rescuegroups", "--limit", "1", "--dry-run")
+
+        self.assertFalse(
+            ProviderSyncState.objects.filter(provider="RESCUEGROUPS").exists())
 
 
 @mock.patch("adoption.management.commands.ingest_provider.get_provider_client", return_value=FakeProvider())
