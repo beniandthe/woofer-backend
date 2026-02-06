@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from adoption.models import Organization, Pet
-
+from typing import Set
 
 @dataclass(frozen=True)
 class IngestResult:
@@ -17,7 +17,8 @@ class IngestResult:
     pets_updated: int
     pets_skipped: int
 
-
+    pets_seen_external_ids: Set[str]
+    
 class IngestionService:
     """
     Provider-neutral DB ingestion:
@@ -97,7 +98,8 @@ class IngestionService:
     ) -> IngestResult:
         org_created = org_updated = 0
         pet_created = pet_updated = pet_skipped = 0
-
+        pets_seen: set[str] = set()
+        
         for org in org_dicts:
             o, created = IngestionService.upsert_organization(org)
             if created:
@@ -110,6 +112,8 @@ class IngestionService:
             if skipped:
                 pet_skipped += 1
                 continue
+            if p is not None:
+                pets_seen.add(p.external_id)
             if created:
                 pet_created += 1
             else:
@@ -121,4 +125,5 @@ class IngestionService:
             pets_created=pet_created,
             pets_updated=pet_updated,
             pets_skipped=pet_skipped,
+            pets_seen_external_ids=pets_seen,
         )

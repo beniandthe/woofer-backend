@@ -15,6 +15,10 @@ from adoption.services.risk_backfill_service import RiskBackfillService
 from adoption.models import ProviderSyncState
 from django.utils import timezone
 
+from adoption.models import Pet
+from django.utils import timezone
+
+
 class DryRunRollback(Exception):
     """Used to force rollback in dry-run mode while still exercising write code paths."""
 
@@ -71,12 +75,13 @@ class Command(BaseCommand):
         except Exception as e:
             raise CommandError(str(e))
 
-        sync_state, _ = ProviderSyncState.objects.get_or_create(provider=provider.upper())
-        sync_state.last_run_started_at = timezone.now()
-        sync_state.last_mode = mode
-
+        sync_state = None
         if not dry_run:
+            sync_state, _ = ProviderSyncState.objects.get_or_create(provider=provider.upper())
+            sync_state.last_run_started_at = timezone.now()
+            sync_state.last_mode = mode
             sync_state.save(update_fields=["last_run_started_at", "last_mode"])
+
 
         self.stdout.write(self.style.NOTICE("Ingest starting..."))
         self.stdout.write(f"  provider={provider} limit={limit} org_id={org_id or 'ALL'} dry_run={dry_run}")
@@ -91,12 +96,6 @@ class Command(BaseCommand):
         for oid in needed_org_ids:
             org_records.extend(list(client.iter_orgs(limit=1, org_id=oid)))
 
-        self.stdout.write(
-            self.style.NOTICE(
-                f"Fetched provider records: orgs={len(org_records)} pets={len(pet_records)} "
-                f"(unique_org_ids={len(needed_org_ids)})"
-            )
-        )
 
         # 2) Map to canonical dicts
         org_dicts = [canonical_org_dict(o) for o in org_records]
@@ -108,23 +107,48 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
                     # Backfill only over ingested pets would be ideal, but canon allows safe all-active backfill.
+                    would_deactivate = (
+                        Pet.objects.filter(source=provider.upper(), status="ACTIVE")
+                        .exclude(external_id__in=result.pets_seen_external_ids).count()
+                    )
+                    
                     risk_count = 0
-                    self.stdout.write(self._format_result(result, risk_count, dry_run=True))
+                    self.stdout.write(self._format_result(result, risk_count, dry_run=True, deactivated=would_deactivate))
                     raise DryRunRollback()
             except DryRunRollback:
                 self.stdout.write(self.style.WARNING("Dry-run complete (rolled back)."))
             return
 
         result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
+
+        now = timezone.now()
+
+        # Mark seen pets' last_seen_at (provider-scoped)
+        Pet.objects.filter(
+            source=provider.upper(),
+            external_id__in=result.pets_seen_external_ids,
+        ).update(last_seen_at=now)
+
+        # Deactivate missing pets (provider-scoped)
+        deactivated = (
+            Pet.objects.filter(source=provider.upper(), status="ACTIVE")
+            .exclude(external_id__in=result.pets_seen_external_ids)
+            .update(status="INACTIVE", last_seen_at=now)
+        )
+        
         risk_count = RiskBackfillService.backfill_all_active()
 
-        self.stdout.write(self._format_result(result, risk_count, dry_run=False))
-        sync_state.last_run_finished_at = timezone.now()
-        sync_state.last_success_at = sync_state.last_run_finished_at
-        sync_state.save(update_fields=["last_run_finished_at", "last_success_at"])
+        self.stdout.write(self._format_result(result, risk_count, dry_run=False, deactivated=deactivated))
+
+        if sync_state is not None:
+            sync_state.last_run_finished_at = timezone.now()
+            sync_state.last_success_at = sync_state.last_run_finished_at
+            sync_state.save(update_fields=["last_run_finished_at", "last_success_at"])
+
         self.stdout.write(self.style.SUCCESS("Ingest complete."))
 
-    def _format_result(self, result, risk_count: int, dry_run: bool) -> str:
+
+    def _format_result(self, result, risk_count: int, dry_run: bool, deactivated: int = 0) -> str:
         return (
             "Ingestion result:\n"
             f"  organizations_created={result.organizations_created}\n"
@@ -134,6 +158,7 @@ class Command(BaseCommand):
             f"  pets_skipped={result.pets_skipped}\n"
             f"  risk_backfilled={risk_count}\n"
             f"  mode={'DRY_RUN' if dry_run else 'WRITE'}\n"
+            f"  pets_deactivated={deactivated}\n"
         )
 
 
