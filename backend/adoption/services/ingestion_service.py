@@ -67,6 +67,15 @@ class IngestionService:
         except Organization.DoesNotExist:
             return None, False, True
 
+        incoming_listed_at = pet.get("listed_at")
+
+        # Preserve listed_at once set (fairness: long-stay must not reset on re-sync)
+        existing = Pet.objects.filter(source=source, external_id=str(external_id)).only("listed_at").first()
+        if existing and existing.listed_at:
+            listed_at = existing.listed_at
+        else:
+            listed_at = incoming_listed_at or timezone.now()
+
         defaults = {
             "organization": org,
             "name": pet.get("name") or "Unknown",
@@ -79,7 +88,7 @@ class IngestionService:
             "is_mixed": bool(pet.get("is_mixed", False)),
             "photos": pet.get("photos") or [],
             "raw_description": pet.get("raw_description") or "",
-            "listed_at": pet.get("listed_at") or timezone.now(),
+            "listed_at": listed_at,
             "status": pet.get("status") or "ACTIVE",
         }
 
