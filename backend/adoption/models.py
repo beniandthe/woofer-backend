@@ -185,6 +185,9 @@ class ProviderSyncState(models.Model):
         # future providers go here
     ]
 
+    lock_acquired_at = models.DateTimeField(null=True, blank=True)
+    lock_owner = models.CharField(max_length=128, null=True, blank=True)
+
     provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES, unique=True)
 
     last_run_started_at = models.DateTimeField(null=True, blank=True)

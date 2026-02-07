@@ -1,6 +1,7 @@
 from unittest import mock
 from django.core.management import call_command
 from django.test import TestCase
+from django.core.management.base import CommandError
 
 from providers.base import ProviderOrg, ProviderPet
 from adoption.models import Organization, Pet
@@ -128,3 +129,32 @@ class IngestProviderCommandTests(TestCase):
         # Other provider pet should remain ACTIVE
         self.assertEqual(Pet.objects.get(source="OTHER", external_id="OTHERPET").status, "ACTIVE")
 
+    def test_refuses_when_locked(self, _mock_factory):
+        ProviderSyncState.objects.create(
+            provider="RESCUEGROUPS",
+            lock_acquired_at=timezone.now(),
+            lock_owner="someone_else",
+        )
+
+        with self.assertRaises(CommandError):
+            call_command("ingest_provider", "--provider", "rescuegroups", "--limit", "1")
+
+    def test_force_overrides_lock(self, _mock_factory):
+        ProviderSyncState.objects.create(
+            provider="RESCUEGROUPS",
+            lock_acquired_at=timezone.now(),
+            lock_owner="someone_else",
+        )
+
+        # Should not raise
+        call_command("ingest_provider", "--provider", "rescuegroups", "--limit", "1", "--force")
+            
+
+    @mock.patch("adoption.management.commands.ingest_provider.IngestionService.ingest_canonical", side_effect=Exception("boom"))
+    def test_lock_released_on_failure(self, _mock_ingest, _mock_factory):
+        with self.assertRaises(Exception):
+            call_command("ingest_provider", "--provider", "rescuegroups", "--limit", "1")
+
+        state = ProviderSyncState.objects.get(provider="RESCUEGROUPS")
+        self.assertIsNone(state.lock_acquired_at)
+        self.assertIsNone(state.lock_owner)

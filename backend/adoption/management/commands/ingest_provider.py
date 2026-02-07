@@ -62,6 +62,17 @@ class Command(BaseCommand):
             action="store_true",
             help="Print only run summaries (default behavior).",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Override provider lock (use cautiously).",
+        )
+        parser.add_argument(
+            "--lock-owner",
+            type=str,
+            default=None,
+            help="Optional lock owner label for audit (e.g. hostname or scheduler name).",
+        )
 
     def handle(self, *args, **options):
         t0 = time.time()
@@ -71,6 +82,9 @@ class Command(BaseCommand):
         limit: int = options["limit"]
         dry_run: bool = options["dry_run"]
         org_id: Optional[str] = options["org_id"]
+        force: bool = options["force"]
+        lock_owner: Optional[str] = options["lock_owner"]
+
 
         try:
             provider: ProviderName = provider_raw  # type: ignore
@@ -84,10 +98,30 @@ class Command(BaseCommand):
 
         sync_state = None
         if not dry_run:
-            sync_state, _ = ProviderSyncState.objects.get_or_create(provider=provider.upper())
-            sync_state.last_run_started_at = timezone.now()
-            sync_state.last_mode = mode
-            sync_state.save(update_fields=["last_run_started_at", "last_mode"])
+            with transaction.atomic():
+                sync_state, _ = ProviderSyncState.objects.select_for_update().get_or_create(
+                    provider=provider.upper()
+                )
+
+                # Refuse if locked and not forced
+                if sync_state.lock_acquired_at and not force:
+                    raise CommandError(
+                        f"Provider {provider.upper()} is locked (owner={sync_state.lock_owner}, acquired_at={sync_state.lock_acquired_at}). "
+                        "Use --force to override."
+                    )
+
+                sync_state.lock_acquired_at = timezone.now()
+                sync_state.lock_owner = lock_owner or "ingest_provider"
+                sync_state.last_run_started_at = sync_state.lock_acquired_at
+                sync_state.last_mode = mode
+                sync_state.save(
+                    update_fields=[
+                        "lock_acquired_at",
+                        "lock_owner",
+                        "last_run_started_at",
+                        "last_mode",
+                    ]
+                )
 
 
         self.stdout.write(self.style.NOTICE("Ingest starting..."))
@@ -141,43 +175,50 @@ class Command(BaseCommand):
             except DryRunRollback:
                 self.stdout.write(self.style.WARNING("Dry-run complete (rolled back)."))
             return
+        
+        try:
+            result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
+            now = timezone.now()
 
-        result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
-        now = timezone.now()
+            # Mark seen pets' last_seen_at (provider-scoped)
+            Pet.objects.filter(
+                source=provider.upper(),
+                external_id__in=result.pets_seen_external_ids,
+            ).update(last_seen_at=now)
 
-        # Mark seen pets' last_seen_at (provider-scoped)
-        Pet.objects.filter(
-            source=provider.upper(),
-            external_id__in=result.pets_seen_external_ids,
-        ).update(last_seen_at=now)
-
-        # Deactivate missing pets (provider-scoped)
-        deactivated = (
-            Pet.objects.filter(source=provider.upper(), status="ACTIVE")
-            .exclude(external_id__in=result.pets_seen_external_ids)
-            .update(status="INACTIVE", last_seen_at=now)
-        )
-
-        elapsed = time.time() - t0
-        risk_count = RiskBackfillService.backfill_all_active()
-
-        self.stdout.write(
-            self._format_result(
-                result,
-                risk_count=risk_count,
-                dry_run=False,
-                deactivated=deactivated,
-                elapsed_s=elapsed,
+            # Deactivate missing pets (provider-scoped)
+            deactivated = (
+                Pet.objects.filter(source=provider.upper(), status="ACTIVE")
+                .exclude(external_id__in=result.pets_seen_external_ids)
+                .update(status="INACTIVE", last_seen_at=now)
             )
-        )
 
-        if sync_state is not None:
-            sync_state.last_run_finished_at = timezone.now()
-            sync_state.last_success_at = sync_state.last_run_finished_at
-            sync_state.save(update_fields=["last_run_finished_at", "last_success_at"])
+            elapsed = time.time() - t0
+            risk_count = RiskBackfillService.backfill_all_active()
 
-        self.stdout.write(self.style.SUCCESS("Ingest complete."))
+            self.stdout.write(
+                self._format_result(
+                    result,
+                    risk_count=risk_count,
+                    dry_run=False,
+                    deactivated=deactivated,
+                    elapsed_s=elapsed,
+                )
+            )
 
+            if sync_state is not None:
+                sync_state.last_run_finished_at = timezone.now()
+                sync_state.last_success_at = sync_state.last_run_finished_at
+                sync_state.save(update_fields=["last_run_finished_at", "last_success_at"])
+
+            self.stdout.write(self.style.SUCCESS("Ingest complete."))
+
+        finally:
+            # Always release lock (even if exceptions occur)
+            if sync_state is not None:
+                sync_state.lock_acquired_at = None
+                sync_state.lock_owner = None
+                sync_state.save(update_fields=["lock_acquired_at", "lock_owner"])
 
     def _format_result(self, result, risk_count: int, dry_run: bool, deactivated: int = 0, elapsed_s: float = 0.0) -> str:
         return (
