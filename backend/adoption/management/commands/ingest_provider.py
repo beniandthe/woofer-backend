@@ -16,7 +16,7 @@ from adoption.models import ProviderSyncState
 from django.utils import timezone
 
 from adoption.models import Pet
-from django.utils import timezone
+import time
 
 
 class DryRunRollback(Exception):
@@ -57,8 +57,15 @@ class Command(BaseCommand):
             default="full",
             help="Ingestion mode. Incremental is recorded but behaves like full for now.",
         )
+        parser.add_argument(
+            "--summary-only",
+            action="store_true",
+            help="Print only run summaries (default behavior).",
+        )
 
     def handle(self, *args, **options):
+        t0 = time.time()
+        summary_only: bool = options["summary_only"]
         mode = options["mode"].upper()
         provider_raw = options["provider"].strip().lower()
         limit: int = options["limit"]
@@ -96,6 +103,11 @@ class Command(BaseCommand):
         for oid in needed_org_ids:
             org_records.extend(list(client.iter_orgs(limit=1, org_id=oid)))
 
+        self.stdout.write(self.style.NOTICE(
+                f"Fetched: pets={len(pet_records)} unique_org_ids={len(needed_org_ids)} orgs={len(org_records)}"
+            )
+        )
+
 
         # 2) Map to canonical dicts
         org_dicts = [canonical_org_dict(o) for o in org_records]
@@ -111,16 +123,26 @@ class Command(BaseCommand):
                         Pet.objects.filter(source=provider.upper(), status="ACTIVE")
                         .exclude(external_id__in=result.pets_seen_external_ids).count()
                     )
-                    
+                    elapsed = time.time() - t0
+
                     risk_count = 0
-                    self.stdout.write(self._format_result(result, risk_count, dry_run=True, deactivated=would_deactivate))
+
+                    self.stdout.write(
+                        self._format_result(
+                            result,
+                            risk_count=0,
+                            dry_run=True,
+                            deactivated=would_deactivate,
+                            elapsed_s=elapsed,
+                        )
+                    )
                     raise DryRunRollback()
+                
             except DryRunRollback:
                 self.stdout.write(self.style.WARNING("Dry-run complete (rolled back)."))
             return
 
         result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
-
         now = timezone.now()
 
         # Mark seen pets' last_seen_at (provider-scoped)
@@ -135,10 +157,19 @@ class Command(BaseCommand):
             .exclude(external_id__in=result.pets_seen_external_ids)
             .update(status="INACTIVE", last_seen_at=now)
         )
-        
+
+        elapsed = time.time() - t0
         risk_count = RiskBackfillService.backfill_all_active()
 
-        self.stdout.write(self._format_result(result, risk_count, dry_run=False, deactivated=deactivated))
+        self.stdout.write(
+            self._format_result(
+                result,
+                risk_count=risk_count,
+                dry_run=False,
+                deactivated=deactivated,
+                elapsed_s=elapsed,
+            )
+        )
 
         if sync_state is not None:
             sync_state.last_run_finished_at = timezone.now()
@@ -148,7 +179,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Ingest complete."))
 
 
-    def _format_result(self, result, risk_count: int, dry_run: bool, deactivated: int = 0) -> str:
+    def _format_result(self, result, risk_count: int, dry_run: bool, deactivated: int = 0, elapsed_s: float = 0.0) -> str:
         return (
             "Ingestion result:\n"
             f"  organizations_created={result.organizations_created}\n"
@@ -156,9 +187,11 @@ class Command(BaseCommand):
             f"  pets_created={result.pets_created}\n"
             f"  pets_updated={result.pets_updated}\n"
             f"  pets_skipped={result.pets_skipped}\n"
+            f"  pets_seen={len(result.pets_seen_external_ids)}\n"
+            f"  pets_deactivated={deactivated}\n"
             f"  risk_backfilled={risk_count}\n"
             f"  mode={'DRY_RUN' if dry_run else 'WRITE'}\n"
-            f"  pets_deactivated={deactivated}\n"
+            f"  elapsed_seconds={elapsed_s:.3f}\n"
         )
 
 
