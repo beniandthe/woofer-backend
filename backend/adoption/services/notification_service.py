@@ -1,6 +1,7 @@
 import logging
 from django.conf import settings
 from adoption.models import Interest
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,9 @@ class NotificationService:
     @staticmethod
     def notify_interest_created(interest: Interest) -> None:
         try:
+            if not getattr(settings, "WOOFER_NOTIFICATIONS_ENABLED", True):
+                return
+            
             if getattr(settings, "WOOFER_NOTIFICATIONS_FORCE_FAIL", False):
                 raise RuntimeError("Forced notification failure (test)")
             pet = interest.pet
@@ -35,11 +39,12 @@ class NotificationService:
 
             logger.info("WooferNotificationStub %s", payload)
 
-            interest.notification_status = Interest.NotificationStatus.SENT
-            interest.save(update_fields=["notification_status"])
+            Interest.objects.filter(pk=interest.pk).update(
+                notification_status=Interest.NotificationStatus.SENT
+            )
         except Exception as e:
             logger.exception("Notification stub failed for interest_id=%s", interest.interest_id)
-            interest.notification_status = Interest.NotificationStatus.FAILED
-            interest.save(update_fields=["notification_status"])
-            # swallow exception
+            Interest.objects.filter(pk=interest.pk).update(
+                notification_status=Interest.NotificationStatus.FAILED
+            )
             return

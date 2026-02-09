@@ -2,10 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError, transaction
+from rest_framework import status
 
-from adoption.models import Pet
+from adoption.models import Pet, Interest
 from adoption.services.interest_service import InterestService
 from adoption.api.serializers.interest import InterestCreateResponseSerializer
+
 
 class PetInterestCreateView(APIView):
     permission_classes = [IsAuthenticated]

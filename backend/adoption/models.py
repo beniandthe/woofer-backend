@@ -20,15 +20,15 @@ class Organization(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["source", "source_org_id"],
-                name="uniq_org_source_provider_id",
-            ),
+                name="uniq_org_source_provider_id"),
         ]
+
         indexes = [
             models.Index(fields=["is_active"]),
         ]
 
-    def __str__(self):
-        return self.name
+        def __str__(self):
+            return self.name
 
 
 class Pet(models.Model):
