@@ -40,11 +40,13 @@ class NotificationService:
             logger.info("WooferNotificationStub %s", payload)
 
             Interest.objects.filter(pk=interest.pk).update(
-                notification_status=Interest.NotificationStatus.SENT
+                notification_status=Interest.NotificationStatus.SENT,
+                notification_attempted_at=timezone.now(),
             )
         except Exception as e:
             logger.exception("Notification stub failed for interest_id=%s", interest.interest_id)
             Interest.objects.filter(pk=interest.pk).update(
-                notification_status=Interest.NotificationStatus.FAILED
+                notification_status=Interest.NotificationStatus.FAILED,
+                notification_attempted_at=timezone.now(),
             )
             return

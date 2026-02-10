@@ -2,8 +2,11 @@ import json
 from django.test import TestCase
 from rest_framework.test import APIClient
 from accounts.models import User
-from adoption.models import Organization, Pet, RiskClassification
+from adoption.models import Organization, Pet, RiskClassification, Interest
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class PetsFeedTests(TestCase):
     def setUp(self):
@@ -16,6 +19,20 @@ class PetsFeedTests(TestCase):
             location="LA",
             is_active=True,
         )
+        self.pet = Pet.objects.create(
+            source="TEST",
+            external_id="p1a",
+            organization=self.org,
+            name="Pet 1",
+            species=Pet.Species.DOG,
+            status=Pet.Status.ACTIVE,
+            listed_at=timezone.now(),
+            last_seen_at=timezone.now(),
+            photos=[],
+            raw_description="",
+            temperament_tags=[],
+        )
+
 
     def test_feed_is_enveloped_and_paginates_with_cursor(self):
         now = timezone.now()
@@ -54,6 +71,31 @@ class PetsFeedTests(TestCase):
         ids1 = {item["pet_id"] for item in p1["data"]["items"]}
         ids2 = {item["pet_id"] for item in p2["data"]["items"]}
         self.assertTrue(ids1.isdisjoint(ids2))
+
+    def test_feed_includes_interest_state(self):
+        # Create interest for this user+pet
+        Interest.objects.create(
+            user=self.user,
+            pet=self.pet,
+            notification_status=Interest.NotificationStatus.SENT,
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
+        resp = client.get("/api/v1/pets?limit=10")
+        self.assertEqual(resp.status_code, 200)
+
+        payload = json.loads(resp.content.decode("utf-8"))
+        self.assertTrue(payload["ok"])
+
+        items = payload["data"]["items"]
+        item = next(i for i in items if i["pet_id"] == str(self.pet.pet_id))
+
+        self.assertTrue(item["is_interested"])
+        self.assertEqual(item["interest_status"], "SENT")
+
+
 
     def test_ranking_boost_affects_feed_order(self):
         now = timezone.now()

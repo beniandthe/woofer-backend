@@ -41,12 +41,16 @@ class InterestsTests(TestCase):
         p1 = json.loads(resp1.content.decode("utf-8"))
         self.assertTrue(p1["ok"])
         interest_id_1 = p1["data"]["interest_id"]
+        self.assertFalse(p1["data"]["already_existed"])
+
 
         resp2 = client.post(f"/api/v1/pets/{self.pet.pet_id}/interest")
         self.assertEqual(resp2.status_code, 200)
         p2 = json.loads(resp2.content.decode("utf-8"))
         self.assertTrue(p2["ok"])
         interest_id_2 = p2["data"]["interest_id"]
+        self.assertTrue(p2["data"]["already_existed"])
+
 
         # Idempotent: same interest returned
         self.assertEqual(interest_id_1, interest_id_2)
@@ -78,6 +82,7 @@ class InterestsTests(TestCase):
 
         interest = Interest.objects.get(interest_id=interest_id)
         self.assertEqual(interest.notification_status, Interest.NotificationStatus.SENT)
+        self.assertIsNotNone(interest.notification_attempted_at)
 
     @override_settings(WOOFER_NOTIFICATIONS_FORCE_FAIL=True)
     def test_notification_failure_does_not_break_interest_create(self):

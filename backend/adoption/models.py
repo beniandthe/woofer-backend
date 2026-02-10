@@ -116,6 +116,8 @@ class Interest(models.Model):
     notification_status = models.CharField(max_length=20, choices=NotificationStatus.choices, default=NotificationStatus.PENDING)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    notification_attempted_at = models.DateTimeField(null=True, blank=True)
+
 
     class Meta:
         constraints = [

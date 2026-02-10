@@ -17,5 +17,8 @@ class PetInterestCreateView(APIView):
         # Ensure pet exists; returns 404 enveloped by exception handler
         get_object_or_404(Pet, pet_id=pet_id)
 
-        interest = InterestService.create_interest(request.user, pet_id)
-        return Response(InterestCreateResponseSerializer(interest).data)
+        interest, created = InterestService.create_interest(request.user, pet_id)
+        payload = InterestCreateResponseSerializer(interest).data
+        payload["already_existed"] = not created
+        return Response(payload)
+
