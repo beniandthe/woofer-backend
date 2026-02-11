@@ -89,14 +89,46 @@ class Pet(models.Model):
 
 
 class AdopterProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="adopter_profile")
+    class HomeType(models.TextChoices):
+        APARTMENT = "APARTMENT"
+        HOUSE = "HOUSE"
+        OTHER = "OTHER"
 
-    home_type = models.CharField(max_length=50, blank=True, null=True)  # APARTMENT|HOUSE|OTHER
+    class ActivityLevel(models.TextChoices):
+        LOW = "LOW"
+        MED = "MED"
+        HIGH = "HIGH"
+
+    class ExperienceLevel(models.TextChoices):
+        NEW = "NEW"
+        SOME = "SOME"
+        EXPERIENCED = "EXPERIENCED"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="adopter_profile",
+    )
+
+    home_type = models.CharField(
+        max_length=20,
+        choices=HomeType.choices,
+        default=HomeType.OTHER,
+    )
     has_kids = models.BooleanField(default=False)
     has_dogs = models.BooleanField(default=False)
     has_cats = models.BooleanField(default=False)
-    activity_level = models.CharField(max_length=20, blank=True, null=True)  # LOW|MED|HIGH
-    experience_level = models.CharField(max_length=20, blank=True, null=True)  # NEW|SOME|EXPERIENCED
+
+    activity_level = models.CharField(
+        max_length=10,
+        choices=ActivityLevel.choices,
+        default=ActivityLevel.MED,
+    )
+    experience_level = models.CharField(
+        max_length=15,
+        choices=ExperienceLevel.choices,
+        default=ExperienceLevel.SOME,
+    )
 
     preferences = models.JSONField(default=dict, blank=True)
 
