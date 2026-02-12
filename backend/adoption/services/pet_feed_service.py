@@ -67,9 +67,25 @@ class PetFeedService:
 
         home_zip = (profile.home_postal_code or "").strip()
         max_distance = (profile.preferences or {}).get("max_distance_miles")
+
         if home_zip and max_distance:
-            #ZIP match only (no geocoding yet)
-            qs = qs.filter(organization__postal_code=home_zip)
+            try:
+                md = int(max_distance)
+            except (TypeError, ValueError):
+                md = None
+
+            if md is not None:
+                if md <= 10:
+                    # Very local: exact ZIP
+                    qs = qs.filter(organization__postal_code=home_zip)
+                elif md <= 50:
+                    # Regional: ZIP prefix (first 3)
+                    prefix = home_zip[:3]
+                    if prefix:
+                        qs = qs.filter(organization__postal_code__startswith=prefix)
+                else:
+                    # >50: MVP does not apply zip filtering (no geocoding yet)
+                    pass
 
         # Lean MVP hard constraints:
         # treat each hard constraint as "required temperament tag"
