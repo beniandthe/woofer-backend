@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.dev")
 
+WOOFER_API_BASE_URL = os.getenv("WOOFER_API_BASE_URL", "http://127.0.0.1:8000")
+WOOFER_DEV_USER = os.getenv("WOOFER_DEV_USER", "")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

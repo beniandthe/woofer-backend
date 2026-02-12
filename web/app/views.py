@@ -1,6 +1,6 @@
 import os
 from django.shortcuts import render, redirect
-from .api_client import api_get, WooferAPIError, api_post
+from .api_client import api_get, WooferAPIError, api_post, api_put
 
 # Create your views here.
 
@@ -80,6 +80,48 @@ def apply_pet(request, pet_id, org_id):
                 "disclaimer": "This is not an approval. The rescue will contact you directly."
             },
         )
+    except WooferAPIError as e:
+        return render(
+            request,
+            "error.html",
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
+
+def profile(request):
+    """
+    Thin client profile page.
+    GET: fetch /api/v1/profile and render.
+    POST: PUT /api/v1/profile with form payload.
+    """
+    try:
+        if request.method == "POST":
+            max_distance_raw = request.POST.get("max_distance_miles", "").strip()
+
+            preferences = {}
+            if max_distance_raw:
+                try:
+                    preferences["max_distance_miles"] = int(max_distance_raw)
+                except ValueError:
+                    # Lean MVP: ignore invalid input
+                    preferences = {}
+
+            payload = {
+                "home_type": request.POST.get("home_type") or "OTHER",
+                "has_kids": request.POST.get("has_kids") == "on",
+                "has_dogs": request.POST.get("has_dogs") == "on",
+                "has_cats": request.POST.get("has_cats") == "on",
+                "activity_level": request.POST.get("activity_level") or "MED",
+                "experience_level": request.POST.get("experience_level") or "SOME",
+                "preferences": preferences,
+            }
+
+            api_put("/api/v1/profile", payload)
+
+        api_result = api_get("/api/v1/profile")
+        profile_data = api_result.get("data", {})
+
+        return render(request, "profile.html", {"profile": profile_data, "msg": request.GET.get("msg")})
     except WooferAPIError as e:
         return render(
             request,

@@ -1,6 +1,7 @@
 import os
 import requests
 from typing import Any, Dict, Optional
+from django.conf import settings
 
 API_BASE_URL = os.getenv("WOOFER_API_BASE_URL", "http://127.0.0.1:8000")
 DEV_USER = os.getenv("WOOFER_DEV_USER")
@@ -107,8 +108,27 @@ def api_post(path: str, body: dict):
 
     return payload
 
+def _headers():
+    h = {"Accept": "application/json"}
+    dev_user = getattr(settings, "WOOFER_DEV_USER", None)
+    if dev_user:
+        h["X-Woofer-Dev-User"] = dev_user
+    return h
 
-	
+def api_put(path: str, json_body: dict):
+    base = settings.WOOFER_API_BASE_URL.rstrip("/")
+    url = f"{base}{path}"
+    
+
+    resp = requests.put(url, json=json_body, headers=_headers(), timeout=10)
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {"raw": resp.text}
+
+    if resp.status_code >= 400:
+        raise WooferAPIError(resp.status_code, payload)
+    return payload
 
 	
 

@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Woofer - Profile</title>
+  </head>
+  <body>
+    <p><a href="/">← Home</a></p>
+
+    <h1>Profile</h1>
+
+    {% if msg %}
+      <p><strong>{{ msg }}</strong></p>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <label>Home type</label>
+      <select name="home_type">
+        <option value="APARTMENT" {% if profile.home_type == "APARTMENT" %}selected{% endif %}>Apartment</option>
+        <option value="HOUSE" {% if profile.home_type == "HOUSE" %}selected{% endif %}>House</option>
+        <option value="OTHER" {% if profile.home_type == "OTHER" %}selected{% endif %}>Other</option>
+      </select>
+
+      <p>
+        <label><input type="checkbox" name="has_kids" {% if profile.has_kids %}checked{% endif %}> Has kids</label><br/>
+        <label><input type="checkbox" name="has_dogs" {% if profile.has_dogs %}checked{% endif %}> Has dogs</label><br/>
+        <label><input type="checkbox" name="has_cats" {% if profile.has_cats %}checked{% endif %}> Has cats</label>
+      </p>
+
+      <label>Activity level</label>
+      <select name="activity_level">
+        <option value="LOW" {% if profile.activity_level == "LOW" %}selected{% endif %}>Low</option>
+        <option value="MED" {% if profile.activity_level == "MED" %}selected{% endif %}>Medium</option>
+        <option value="HIGH" {% if profile.activity_level == "HIGH" %}selected{% endif %}>High</option>
+      </select>
+
+      <br/><br/>
+
+      <label>Experience level</label>
+      <select name="experience_level">
+        <option value="NEW" {% if profile.experience_level == "NEW" %}selected{% endif %}>New</option>
+        <option value="SOME" {% if profile.experience_level == "SOME" %}selected{% endif %}>Some</option>
+        <option value="EXPERIENCED" {% if profile.experience_level == "EXPERIENCED" %}selected{% endif %}>Experienced</option>
+      </select>
+
+      <br/><br/>
+
+      <label>Max distance (miles)</label>
+      <input
+        type="number"
+        name="max_distance_miles"
+        min="1"
+        max="500"
+        value="{{ profile.preferences.max_distance_miles|default:'' }}"
+      />
+
+      <br/><br/>
+
+      <button type="submit">Save</button>
+    </form>
+  </body>
+</html>
