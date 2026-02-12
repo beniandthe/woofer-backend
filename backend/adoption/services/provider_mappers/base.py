@@ -62,6 +62,7 @@ def canonical_org_dict(org: ProviderOrg) -> Dict[str, Any]:
         "name": org.name or (org.external_org_id or "Unknown Organization"),
         "contact_email": org.contact_email,
         "location": _location(org.city, org.state),
+        "postal_code": (org.postal_code or "").strip(),
         "is_active": True,
         # raw provider payload should NOT be written to canonical models unless canon says so
     }

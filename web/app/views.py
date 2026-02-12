@@ -114,6 +114,7 @@ def profile(request):
                 "activity_level": request.POST.get("activity_level") or "MED",
                 "experience_level": request.POST.get("experience_level") or "SOME",
                 "preferences": preferences,
+                "home_postal_code": request.POST.get("home_postal_code", "").strip(),
             }
 
             api_put("/api/v1/profile", payload)

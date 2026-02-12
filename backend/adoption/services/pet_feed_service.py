@@ -65,6 +65,12 @@ class PetFeedService:
         if preferred_age_groups:
             qs = qs.filter(age_group__in=preferred_age_groups)
 
+        home_zip = (profile.home_postal_code or "").strip()
+        max_distance = (profile.preferences or {}).get("max_distance_miles")
+        if home_zip and max_distance:
+            #ZIP match only (no geocoding yet)
+            qs = qs.filter(organization__postal_code=home_zip)
+
         # Lean MVP hard constraints:
         # treat each hard constraint as "required temperament tag"
         hard_constraints = prefs.get("hard_constraints") or []

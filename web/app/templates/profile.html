@@ -44,7 +44,12 @@
         <option value="SOME" {% if profile.experience_level == "SOME" %}selected{% endif %}>Some</option>
         <option value="EXPERIENCED" {% if profile.experience_level == "EXPERIENCED" %}selected{% endif %}>Experienced</option>
       </select>
+	
+      <br/><br/>
 
+      <label>Home ZIP / Postal Code</label>
+      <input type="text" name="home_postal_code" value="{{ profile.home_postal_code|default:'' }}" />
+	
       <br/><br/>
 
       <label>Max distance (miles)</label>

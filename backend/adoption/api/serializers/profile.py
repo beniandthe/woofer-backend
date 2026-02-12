@@ -15,4 +15,5 @@ class AdopterProfileSerializer(serializers.ModelSerializer):
             "activity_level",
             "experience_level",
             "preferences",
+            "home_postal_code",
         ]

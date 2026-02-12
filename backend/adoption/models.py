@@ -12,7 +12,7 @@ class Organization(models.Model):
     contact_email = models.EmailField(blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-
+    postal_code = models.CharField(max_length=20, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -118,7 +118,7 @@ class AdopterProfile(models.Model):
     has_kids = models.BooleanField(default=False)
     has_dogs = models.BooleanField(default=False)
     has_cats = models.BooleanField(default=False)
-
+    home_postal_code = models.CharField(max_length=20, blank=True, default="")
     activity_level = models.CharField(
         max_length=10,
         choices=ActivityLevel.choices,

@@ -37,6 +37,7 @@ class IngestionService:
             "name": org.get("name") or (source_org_id or "Unknown Organization"),
             "contact_email": org.get("contact_email"),
             "location": org.get("location") or "Unknown",
+            "postal_code": org.get("postal_code", "") or "",
             "is_active": bool(org.get("is_active", True)),
         }
 

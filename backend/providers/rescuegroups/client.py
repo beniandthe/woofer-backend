@@ -143,6 +143,7 @@ class RescueGroupsClient(ProviderClient):
             if not isinstance(row, dict):
                 continue
             attrs = row.get("attributes") or {}
+            postal = attrs.get("postalcode") or attrs.get("postal_code") or attrs.get("zip") or attrs.get("zipcode")
             out.append(
                 ProviderOrg(
                     provider=self.provider_name,
@@ -151,6 +152,7 @@ class RescueGroupsClient(ProviderClient):
                     contact_email=attrs.get("email"),
                     city=attrs.get("city"),
                     state=attrs.get("state"),
+                    postal_code=str(postal).strip() if postal else None,
                     raw=row,
                 )
             )

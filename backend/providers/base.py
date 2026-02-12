@@ -19,6 +19,7 @@ class ProviderOrg:
     contact_email: Optional[str] = None
     city: Optional[str] = None
     state: Optional[str] = None
+    postal_code: Optional[str] = None
     raw: Dict[str, Any] = field(default_factory=dict)  # for debugging/traceability only
 
 
