@@ -91,6 +91,8 @@ def canonical_pet_dict(pet: ProviderPet) -> Dict[str, Any]:
         "raw_description": _str(pet.raw_description) or "",
         "listed_at": _parse_iso_dt(pet.listed_at_iso),
         "status": _normalize_status(pet.status),
+        "apply_url": (pet.apply_url or "").strip(),
+        "apply_hint": (pet.apply_hint or "").strip(),
         }
   
 

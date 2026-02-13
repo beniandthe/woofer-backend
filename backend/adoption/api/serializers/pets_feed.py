@@ -9,6 +9,8 @@ class PetFeedItemSerializer(serializers.ModelSerializer):
     why_shown = serializers.SerializerMethodField()
     is_interested = serializers.SerializerMethodField()
     interest_status = serializers.SerializerMethodField()
+    apply_url = serializers.CharField(read_only=True)
+    apply_hint = serializers.CharField(read_only=True)
     
     
     class Meta:
@@ -25,6 +27,8 @@ class PetFeedItemSerializer(serializers.ModelSerializer):
             "why_shown",
             "is_interested",
             "interest_status",
+            "apply_url",
+            "apply_hint",
         ]
 
     

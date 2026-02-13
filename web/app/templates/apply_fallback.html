@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head><title>Apply</title></head>
+  <body>
+    <h1>Apply for {{ pet.name }}</h1>
+
+    {% if apply_hint %}
+      <p><strong>Note:</strong> {{ apply_hint }}</p>
+    {% endif %}
+
+    <p>We don’t have a direct application link for this pet yet.</p>
+
+    <h2>Organization</h2>
+    <p><strong>{{ organization.name }}</strong></p>
+    <p>{{ organization.location }}</p>
+
+    <p>
+      Next step: contact the organization and mention you’re applying for
+      <strong>{{ pet.name }}</strong>.
+    </p>
+
+    <p><a href="/">Back to feed</a></p>
+  </body>
+</html>
+

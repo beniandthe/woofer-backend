@@ -91,6 +91,8 @@ class IngestionService:
             "raw_description": pet.get("raw_description") or "",
             "listed_at": listed_at,
             "status": pet.get("status") or "ACTIVE",
+            "apply_url": pet.get("apply_url", "") or "",
+            "apply_hint": pet.get("apply_hint", "") or "",
         }
 
         obj, created = Pet.objects.update_or_create(

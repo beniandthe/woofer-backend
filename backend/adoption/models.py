@@ -41,7 +41,6 @@ class Pet(models.Model):
         INACTIVE = "INACTIVE"
 
     pet_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     source = models.CharField(max_length=50)  # PETFINDER | RESCUEGROUPS
     external_id = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="pets")
@@ -56,7 +55,9 @@ class Pet(models.Model):
     breed_primary = models.CharField(max_length=255, blank=True, null=True)
     breed_secondary = models.CharField(max_length=255, blank=True, null=True)
     is_mixed = models.BooleanField(default=False)
-
+    apply_url = models.URLField(blank=True, default="")
+    apply_hint = models.CharField(max_length=255, blank=True, default="")
+    
     # keep simple for MVP (can normalize later)
     photos = models.JSONField(default=list, blank=True)
     raw_description = models.TextField(blank=True, null=True)

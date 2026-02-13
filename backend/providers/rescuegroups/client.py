@@ -188,7 +188,15 @@ class RescueGroupsClient(ProviderClient):
                 continue
             attrs = row.get("attributes") or {}
             rel = row.get("relationships") or {}
-            
+
+            apply_url = (
+                attrs.get("url")
+                or attrs.get("animalUrl")
+                or attrs.get("adoptionUrl")
+                or attrs.get("adoptUrl")
+                or None
+            )
+
             external_org_id = None
             org_rel = (
                 rel.get("orgs")
@@ -231,6 +239,8 @@ class RescueGroupsClient(ProviderClient):
                     raw_description=attrs.get("descriptionText") or "",
                     listed_at_iso=attrs.get("availableDate") or attrs.get("createdDate") or attrs.get("updatedDate"),
                     status="Available",  # mapper normalizes to ACTIVE
+                    apply_url=str(apply_url).strip() if apply_url else None,
+                    apply_hint="Apply via RescueGroups" if apply_url else None,
                     raw=row,
                 )
             )

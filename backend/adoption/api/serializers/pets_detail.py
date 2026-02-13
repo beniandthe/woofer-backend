@@ -6,6 +6,8 @@ class PetDetailSerializer(serializers.ModelSerializer):
     pet_id = serializers.UUIDField(read_only=True)
     organization = serializers.SerializerMethodField()
     why_shown = serializers.SerializerMethodField()
+    apply_url = serializers.CharField(read_only=True)
+    apply_hint = serializers.CharField(read_only=True)
 
     class Meta:
         model = Pet
@@ -31,6 +33,8 @@ class PetDetailSerializer(serializers.ModelSerializer):
             "status",
             "why_shown",
             "organization",
+            "apply_url",
+            "apply_hint",
         ]
 
     def get_organization(self, obj):

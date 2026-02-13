@@ -44,6 +44,17 @@ def home(request):
     except WooferAPIError as e:
         # Canon: display API errors verbatim
         return render(request, "error.html", {"status_code": e.status_code, "payload": e.payload}, status=502)
+
+def _find_pet_in_feed(pet_id: str):
+    """
+    Lean MVP fallback if /api/v1/pets/{id} doesn't exist.
+    Fetch first page of feed and search for a matching pet.
+    """
+    feed = api_get("/api/v1/pets?limit=50")
+    for item in (feed.get("data", {}).get("items") or []):  
+        if item.get("pet_id") == pet_id:
+            return item
+    return None
     
 def like_pet(request, pet_id):
     try:
@@ -61,32 +72,62 @@ def like_pet(request, pet_id):
             {"status_code": e.status_code, "payload": e.payload},
             status=502,
         )
+    
 
-def apply_pet(request, pet_id, org_id):
+def apply_pet(request, pet_id):
+    """
+    Apply v1 (handoff):
+    - Try pet detail endpoint first.
+    - Fallback: find pet in the feed.
+    - If apply_url exists: redirect user there.
+    - Else: show minimal fallback instructions.
+    """
+    pet_id_str = str(pet_id)
+
+    # 1) Try detail endpoint (if backend has it)
+    pet = None
     try:
-        api_post(
-            "/api/v1/applications",
-            {
-                "pet_id": str(pet_id),
-                "organization_id": str(org_id),
-                "payload": {},
-            },
-        )
-        return render(
-            request,
-            "confirmation.html",
-            {
-                "message": "Application submitted.",
-                "disclaimer": "This is not an approval. The rescue will contact you directly."
-            },
-        )
+        detail = api_get(f"/api/v1/pets/{pet_id_str}")
+        pet = detail.get("data") or None
     except WooferAPIError as e:
-        return render(
-            request,
-            "error.html",
-            {"status_code": e.status_code, "payload": e.payload},
-            status=502,
-        )
+        if e.status_code != 404:
+            return render(
+                request,
+                "error.html",
+                {"status_code": e.status_code, "payload": e.payload},
+                status=502,
+            )
+
+    # 2) Fallback: find in feed
+    if pet is None:
+        try:
+            pet = _find_pet_in_feed(pet_id_str)
+        except WooferAPIError as e:
+            return render(
+                request,
+                "error.html",
+                {"status_code": e.status_code, "payload": e.payload},
+                status=502,
+            )
+
+    if not pet:
+        return render(request, "apply_missing.html", {"pet_id": pet_id_str}, status=404)
+
+    apply_url = (pet.get("apply_url") or "").strip()
+    apply_hint = (pet.get("apply_hint") or "").strip()
+
+    if apply_url:
+        return redirect(apply_url)
+
+    org = pet.get("organization") or {}
+    return render(
+        request,
+        "apply_fallback.html",
+        {"pet": pet, "organization": org, "apply_hint": apply_hint},
+        status=200,
+    )
+
+
 
 def profile(request):
     """
@@ -114,7 +155,6 @@ def profile(request):
                 "activity_level": request.POST.get("activity_level") or "MED",
                 "experience_level": request.POST.get("experience_level") or "SOME",
                 "preferences": preferences,
-                "home_postal_code": request.POST.get("home_postal_code", "").strip(),
             }
 
             api_put("/api/v1/profile", payload)
@@ -130,3 +170,8 @@ def profile(request):
             {"status_code": e.status_code, "payload": e.payload},
             status=502,
         )
+
+
+
+
+

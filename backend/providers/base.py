@@ -49,6 +49,9 @@ class ProviderPet:
     listed_at_iso: Optional[str] = None   # keep as ISO string at boundary; mapper parses if desired
     status: Optional[str] = None          # "ACTIVE"/"INACTIVE" or provider status; mapper normalizes
 
+    apply_url: Optional[str] = None
+    apply_hint: Optional[str] = None
+    
     raw: Dict[str, Any] = field(default_factory=dict)  # traceability only
 
 
