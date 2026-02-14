@@ -1,6 +1,7 @@
 from rest_framework.views import exception_handler as drf_exception_handler
 from rest_framework import status as drf_status
 
+
 def canonical_exception_handler(exc, context):
     """
     Ensures all API errors match:

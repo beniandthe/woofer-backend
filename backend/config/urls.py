@@ -19,7 +19,7 @@ from django.urls import path, include
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from adoption.api.views.profile import ProfileView
-
+from adoption.api.views.pet_apply import PetApplyCreateView
 class HealthView(APIView):
     authentication_classes = []
     permission_classes = []
@@ -31,6 +31,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health", HealthView.as_view()),
     path("api/v1/", include("adoption.api.urls")),
-    path("api/v1/profile", ProfileView.as_view()),
 ]
 

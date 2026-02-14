@@ -1,0 +1,14 @@
+<h1>Application request sent</h1>
+
+{% if email_status == "SENT" %}
+  <p>Email sent to the rescue.</p>
+{% else %}
+  <p>We couldn’t send the email. Please contact the rescue directly.</p>
+{% endif %}
+
+{% if apply_url %}
+  <p><a href="{{ apply_url }}">Continue to the rescue application page</a></p>
+{% endif %}
+
+<p><a href="/">Return home</a></p>
+

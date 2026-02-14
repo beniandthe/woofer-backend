@@ -43,18 +43,17 @@ class ApplicationsTests(TestCase):
         client.force_authenticate(user=self.user)
 
         body = {
-            "pet_id": str(self.pet.pet_id),
-            "organization_id": str(self.org1.organization_id),
+            "organization_id": str(self.org1.organization_id),  
             "payload": {"field": "value"},
         }
 
-        resp1 = client.post("/api/v1/applications", body, format="json")
+        resp1 = client.post(f"/api/v1/pets/{self.pet.pet_id}/apply", body, format="json")
         self.assertEqual(resp1.status_code, 200)
         p1 = json.loads(resp1.content.decode("utf-8"))
         self.assertTrue(p1["ok"])
         app_id_1 = p1["data"]["application_id"]
 
-        resp2 = client.post("/api/v1/applications", body, format="json")
+        resp2 = client.post(f"/api/v1/pets/{self.pet.pet_id}/apply", body, format="json")
         self.assertEqual(resp2.status_code, 200)
         p2 = json.loads(resp2.content.decode("utf-8"))
         self.assertTrue(p2["ok"])
@@ -67,14 +66,12 @@ class ApplicationsTests(TestCase):
         client.force_authenticate(user=self.user)
 
         body = {
-            "pet_id": str(self.pet.pet_id),
             "organization_id": str(self.org2.organization_id),  # mismatch
             "payload": {"field": "value"},
         }
 
-        resp = client.post("/api/v1/applications", body, format="json")
+        resp = client.post(f"/api/v1/pets/{self.pet.pet_id}/apply", body, format="json")
         self.assertEqual(resp.status_code, 400)
-
         payload = json.loads(resp.content.decode("utf-8"))
         self.assertFalse(payload["ok"])
         self.assertIn("error", payload)

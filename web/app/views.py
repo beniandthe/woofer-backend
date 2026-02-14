@@ -87,16 +87,27 @@ def apply_pet(request, pet_id):
     # 1) Try detail endpoint (if backend has it)
     pet = None
     try:
-        detail = api_get(f"/api/v1/pets/{pet_id_str}")
-        pet = detail.get("data") or None
+        result = api_post(f"/api/v1/pets/{pet_id}/apply", {"payload": {}})
+        data = result.get("data", {})
+
+        return render(
+            request,
+            "apply_confirmation.html",
+            {
+                "email_status": data.get("email_status"),
+                "apply_url": data.get("apply_url"),
+                "apply_hint": data.get("apply_hint"),
+            },
+        )
     except WooferAPIError as e:
-        if e.status_code != 404:
-            return render(
-                request,
-                "error.html",
-                {"status_code": e.status_code, "payload": e.payload},
-                status=502,
-            )
+        return render(
+            request,
+            "error.html",
+            {
+                "status_code": e.status_code,
+                "payload": e.payload,
+            },
+            status=502)
 
     # 2) Fallback: find in feed
     if pet is None:

@@ -166,11 +166,15 @@ class Application(models.Model):
     """
     Lean MVP: structured handoff record only (not a full workflow).
     """
+    class EmailStatus(models.TextChoices):
+        SENT = "SENT"
+        FAILED = "FAILED"
+        
     application_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="applications")
-    pet = models.ForeignKey(Pet, on_delete=models.PROTECT, related_name="applications")
+    pet = models.ForeignKey(Pet, on_delete=models.CASCADE, related_name="applications")
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="applications")
-
+    email_status = models.CharField(max_length=10, choices=EmailStatus.choices, default=EmailStatus.SENT,)
     payload = models.JSONField(default=dict, blank=True)  # adopter-entered fields for handoff
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -180,7 +184,9 @@ class Application(models.Model):
         ]
         indexes = [
             models.Index(fields=["created_at"]),
+            models.Index(fields=["email_status"]),
         ]
+    
 
 
 class RiskClassification(models.Model):
