@@ -23,7 +23,7 @@ def api_get(path: str, token: Optional[str] = None, params: Optional[Dict[str, A
 	    headers["Authorization"] = f"Bearer {token}"
 
     try:
-            resp = requests.get(url, headers=headers, params=params, timeout=10)
+        resp = requests.get(url, headers=headers, params=params, timeout=10)
     except requests.RequestException as e:
     # Backend unreachable / network error: raise WooferAPIError with envelope-ish payload
             payload = {

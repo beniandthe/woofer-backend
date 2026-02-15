@@ -38,16 +38,19 @@
                   <small><strong>Liked ✓</strong></small>
                 </div>
               {% else %}
-		<div style="display:flex; gap:8px; margin-top:8px;">
-                 <form method="post" action="{% url 'like_pet' pet.pet_id %}">
-                  {% csrf_token %}
-                  <button type="submit">Like</button>
-                </form>
-              {% endif %}
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <form method="post" action="{% url 'like_pet' pet.pet_id %}">
+                        {% csrf_token %}
+                        <button type="submit">Like</button>
+                    </form>
+                    {% endif %}
 
-                 <a class="btn" href="/pets/{{ pet.pet_id }}/apply/">Apply</a>
+                    <form method="post" action="/pets/{{ pet.pet_id }}/apply/">
+                        {% csrf_token %}
+                        <button type="submit">Apply</button>
+                    </form>
 
-	     </div>
+                </div>
             {% endif %}
 
             {% if pet.why_shown %}

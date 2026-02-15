@@ -76,18 +76,20 @@ def like_pet(request, pet_id):
 
 def apply_pet(request, pet_id):
     """
-    Apply v1 (handoff):
-    - Try pet detail endpoint first.
-    - Fallback: find pet in the feed.
-    - If apply_url exists: redirect user there.
-    - Else: show minimal fallback instructions.
+    Controlled handoff v1 (Sprint 9.2):
+    - POST backend apply endpoint
+    - Render confirmation page
+    - If apply_url exists, show continue link
     """
-    pet_id_str = str(pet_id)
+    if request.method != "POST":
+        # Lean MVP: Apply is a POST-only action
+        return redirect("/")
 
-    # 1) Try detail endpoint (if backend has it)
-    pet = None
     try:
-        result = api_post(f"/api/v1/pets/{pet_id}/apply", {"payload": {}})
+        result = api_post(
+            f"/api/v1/pets/{pet_id}/apply",
+            {"payload": {}},
+        )
         data = result.get("data", {})
 
         return render(
@@ -95,6 +97,7 @@ def apply_pet(request, pet_id):
             "apply_confirmation.html",
             {
                 "email_status": data.get("email_status"),
+                "disclaimer": "This is not an approval. The rescue will contact you directly.",
                 "apply_url": data.get("apply_url"),
                 "apply_hint": data.get("apply_hint"),
             },
@@ -103,11 +106,9 @@ def apply_pet(request, pet_id):
         return render(
             request,
             "error.html",
-            {
-                "status_code": e.status_code,
-                "payload": e.payload,
-            },
-            status=502)
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
 
     # 2) Fallback: find in feed
     if pet is None:

@@ -1,13 +1,24 @@
 <h1>Application request sent</h1>
+<h2>{{ message }}</h2>
+<p>{{ disclaimer }}</p>
 
 {% if email_status == "SENT" %}
-  <p>Email sent to the rescue.</p>
+<p>Email sent to the rescue.</p>
+
 {% else %}
-  <p>We couldn’t send the email. Please contact the rescue directly.</p>
+<p>We couldn’t send the email. Please contact the rescue directly.</p>
+{% endif %}
+
+{% if apply_hint %}
+<p><strong>Next:</strong> {{ apply_hint }}</p>
 {% endif %}
 
 {% if apply_url %}
-  <p><a href="{{ apply_url }}">Continue to the rescue application page</a></p>
+<p>
+    <a href="{{ apply_url }}" target="_blank" rel="noopener">Continue to organization application</a>
+</p>
+{% else %}
+<p>No external application link was provided. You’re all set — the organization has your request.</p>
 {% endif %}
 
 <p><a href="/">Return home</a></p>
