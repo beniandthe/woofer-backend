@@ -176,6 +176,8 @@ class Application(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="applications")
     email_status = models.CharField(max_length=10, choices=EmailStatus.choices, default=EmailStatus.SENT,)
     payload = models.JSONField(default=dict, blank=True)  # adopter-entered fields for handoff
+    profile_snapshot = models.JSONField(default=dict, blank=True)
+    handoff_payload = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -61,22 +61,9 @@ class NotificationService:
             org = pet.organization
             user = app.user
 
-            payload = {
-                "type": "APPLICATION_CREATED",
-                "application_id": str(app.application_id),
-                "pet_id": str(pet.pet_id),
-                "pet_name": pet.name,
-                "organization_id": str(org.organization_id),
-                "organization_name": org.name,
-                "organization_contact_email": org.contact_email,
-                "user_id": str(user.id),
-                "username": getattr(user, "username", None),
-                "user_email": getattr(user, "email", None),
-                "apply_url": getattr(pet, "apply_url", None),
-                "apply_hint": getattr(pet, "apply_hint", None),
-                "payload": app.payload,
-            }
-
+            payload = dict(app.payload or {})
+            payload["application_id"] = str(app.application_id)
+            payload["email_status"] = app.email_status
             logger.info("WooferApplicationEmailStub %s", payload)
 
             app.email_status = Application.EmailStatus.SENT
