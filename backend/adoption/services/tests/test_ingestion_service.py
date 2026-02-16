@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
+from unittest.mock import patch
 from datetime import timedelta
 from adoption.models import Organization, Pet
 from adoption.services.ingestion_service import IngestionService
@@ -129,3 +130,66 @@ class IngestionListedAtTests(TestCase):
         self.assertEqual(p.listed_at, original_time)     # must remain original
         self.assertEqual(p.name, "Bella Updated")         # other fields should still update
 
+
+class IngestionAIDescriptionTests(TestCase):
+    @patch("adoption.services.pet_enrichment_service.PetEnrichmentService.generate_fun_neutral_summary")
+    def test_ai_description_generated_when_missing(self, mock_generate):
+        mock_generate.return_value = "A fun, neutral summary."
+
+        org_dicts = [{
+            "source": "RESCUEGROUPS",
+            "source_org_id": "RG123",
+            "name": "Test Org",
+            "contact_email": "org@example.com",
+            "location": "Los Angeles, CA",
+            "is_active": True,
+        }]
+
+        pet_dicts = [{
+            "source": "RESCUEGROUPS",
+            "external_id": "P1",
+            "organization_source_org_id": "RG123",
+            "name": "Bella",
+            "species": "DOG",
+            "photos": ["https://example.com/a.jpg"],
+            "raw_description": "Sweet dog",
+            # ai_description intentionally omitted
+            "listed_at": timezone.now(),
+            "status": "ACTIVE",
+        }]
+
+        IngestionService.ingest_canonical(org_dicts, pet_dicts)
+
+        p = Pet.objects.get(source="RESCUEGROUPS", external_id="P1")
+        self.assertEqual(p.ai_description, "A fun, neutral summary.")
+        mock_generate.assert_called_once_with("Sweet dog")
+
+    @patch("adoption.services.pet_enrichment_service.PetEnrichmentService.generate_fun_neutral_summary")
+    def test_ai_description_not_overwritten_if_provided(self, mock_generate):
+        org_dicts = [{
+            "source": "RESCUEGROUPS",
+            "source_org_id": "RG123",
+            "name": "Test Org",
+            "contact_email": "org@example.com",
+            "location": "Los Angeles, CA",
+            "is_active": True,
+        }]
+
+        pet_dicts = [{
+            "source": "RESCUEGROUPS",
+            "external_id": "P1",
+            "organization_source_org_id": "RG123",
+            "name": "Bella",
+            "species": "DOG",
+            "photos": [],
+            "raw_description": "Sweet dog",
+            "ai_description": "Provider-supplied description.",
+            "listed_at": timezone.now(),
+            "status": "ACTIVE",
+        }]
+
+        IngestionService.ingest_canonical(org_dicts, pet_dicts)
+
+        p = Pet.objects.get(source="RESCUEGROUPS", external_id="P1")
+        self.assertEqual(p.ai_description, "Provider-supplied description.")
+        mock_generate.assert_not_called()

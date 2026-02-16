@@ -1,11 +1,9 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, Optional, Tuple
-
 from django.db import transaction
 from django.utils import timezone
-
+from adoption.services.pet_enrichment_service import PetEnrichmentService
 from adoption.models import Organization, Pet
 from typing import Set
 
@@ -48,6 +46,9 @@ class IngestionService:
         )
         return obj, created
 
+    
+
+
     @staticmethod
     def upsert_pet(pet: Dict[str, Any]) -> Tuple[Optional[Pet], bool, bool]:
         """
@@ -71,11 +72,19 @@ class IngestionService:
         incoming_listed_at = pet.get("listed_at")
 
         # Preserve listed_at once set (fairness: long-stay must not reset on re-sync)
-        existing = Pet.objects.filter(source=source, external_id=str(external_id)).only("listed_at").first()
+        existing = (
+            Pet.objects.filter(source=source, external_id=str(external_id))
+            .only("listed_at")
+            .first()
+        )
         if existing and existing.listed_at:
             listed_at = existing.listed_at
         else:
             listed_at = incoming_listed_at or timezone.now()
+
+        # --- Descriptions (raw + AI) ---
+        raw_desc = pet.get("raw_description") or ""
+        ai_desc = pet.get("ai_description")
 
         defaults = {
             "organization": org,
@@ -88,12 +97,20 @@ class IngestionService:
             "breed_secondary": pet.get("breed_secondary"),
             "is_mixed": bool(pet.get("is_mixed", False)),
             "photos": pet.get("photos") or [],
-            "raw_description": pet.get("raw_description") or "",
+            "raw_description": raw_desc,
             "listed_at": listed_at,
             "status": pet.get("status") or "ACTIVE",
             "apply_url": pet.get("apply_url", "") or "",
             "apply_hint": pet.get("apply_hint", "") or "",
         }
+
+        # If upstream provides ai_description, keep it; otherwise generate from raw_description
+        if ai_desc:
+            defaults["ai_description"] = ai_desc
+        else:
+            generated = PetEnrichmentService.generate_fun_neutral_summary(raw_desc)
+            if generated:
+                defaults["ai_description"] = generated
 
         obj, created = Pet.objects.update_or_create(
             source=source,
@@ -110,8 +127,9 @@ class IngestionService:
     ) -> IngestResult:
         org_created = org_updated = 0
         pet_created = pet_updated = pet_skipped = 0
-        pets_seen: set[str] = set()
-        
+
+        pets_seen: Set[str] = set()
+
         for org in org_dicts:
             o, created = IngestionService.upsert_organization(org)
             if created:
@@ -120,12 +138,14 @@ class IngestionService:
                 org_updated += 1
 
         for pet in pet_dicts:
+            external_id = pet.get("external_id")
+            if external_id:
+                pets_seen.add(str(external_id))
+
             p, created, skipped = IngestionService.upsert_pet(pet)
             if skipped:
                 pet_skipped += 1
                 continue
-            if p is not None:
-                pets_seen.add(p.external_id)
             if created:
                 pet_created += 1
             else:
@@ -139,3 +159,6 @@ class IngestionService:
             pets_skipped=pet_skipped,
             pets_seen_external_ids=pets_seen,
         )
+   
+
+

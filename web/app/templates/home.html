@@ -26,61 +26,70 @@
 {% if api_result.ok %}
   {% with items=api_result.data.items %}
     {% if items %}
-      <ul>
-        {% for pet in items %}
-          <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
-            <strong>{{ pet.name }}</strong>
-            {% if pet.organization %}
-              — <em>{{ pet.organization.name }}</em>
+<ul>
+    {% for pet in items %}
+    <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
+        <strong>{{ pet.name }}</strong>
+        {% if pet.organization %}
+        — <em>{{ pet.organization.name }}</em>
+        {% endif %}
 
-              {% if pet.pet_id in liked_ids %}
-                <div style="margin-top: 6px;">
-                  <small><strong>Liked ✓</strong></small>
-                </div>
-              {% else %}
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <form method="post" action="{% url 'like_pet' pet.pet_id %}">
-                        {% csrf_token %}
-                        <button type="submit">Like</button>
-                    </form>
-                    {% endif %}
+        {% if pet.ai_description %}
+        <div style="margin-top: 8px;">
+            <small>{{ pet.ai_description }}</small>
+        </div>
+        {% endif %}
 
-                    <form method="post" action="/pets/{{ pet.pet_id }}/apply/">
-                        {% csrf_token %}
-                        <button type="submit">Apply</button>
-                    </form>
+        {% if pet.organization %}
+        {% if pet.pet_id in liked_ids %}
+        <div style="margin-top: 6px;">
+            <small><strong>Liked ✓</strong></small>
+        </div>
+        {% endif %}
 
-                </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            {% if pet.pet_id not in liked_ids %}
+            <form method="post" action="{% url 'like_pet' pet.pet_id %}">
+                {% csrf_token %}
+                <button type="submit">Like</button>
+            </form>
             {% endif %}
 
-            {% if pet.why_shown %}
-              <div style="margin-top: 8px; opacity: 0.9;">
-                <small><strong>Why you’re seeing this:</strong></small>
+            <form method="post" action="{% url 'pet_apply' pet.pet_id %}">
+                {% csrf_token %}
+                <button type="submit">Apply</button>
+            </form>
+        </div>
+        {% endif %}
 
-                <div style="margin-top: 6px;">
-                  {% for reason in pet.why_shown %}
-                    {% with info=why_shown_copy|get_item:reason %}
-                      <span style="display:inline-block; padding:2px 8px; margin:2px; border:1px solid #999; border-radius:999px;">
-                        {{ info.label|default:reason }}
-                      </span>
-                    {% endwith %}
-                  {% endfor %}
-                </div>
+        {% if pet.why_shown %}
+        <div style="margin-top: 8px; opacity: 0.9;">
+            <small><strong>Why you’re seeing this:</strong></small>
 
-                <div style="margin-top: 6px;">
-                  {% for reason in pet.why_shown %}
-                    {% with info=why_shown_copy|get_item:reason %}
-                      <div style="margin: 2px 0;">
-                        <small>{{ info.blurb|default:"" }}</small>
-                      </div>
-                    {% endwith %}
-                  {% endfor %}
+            <div style="margin-top: 6px;">
+                {% for reason in pet.why_shown %}
+                {% with info=why_shown_copy|get_item:reason %}
+                <span style="display:inline-block; padding:2px 8px; margin:2px; border:1px solid #999; border-radius:999px;">
+                    {{ info.label|default:reason }}
+                </span>
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 6px;">
+                {% for reason in pet.why_shown %}
+                {% with info=why_shown_copy|get_item:reason %}
+                <div style="margin: 2px 0;">
+                    <small>{{ info.blurb|default:"" }}</small>
                 </div>
-              </div>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
     {% else %}
       <p><strong>No pets available right now.</strong></p>
       <p><small>Try increasing distance or check back later.</small></p>
