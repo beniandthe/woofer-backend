@@ -183,7 +183,19 @@ def profile(request):
             status=502,
         )
 
-
+def applications(request):
+    try:
+        api_result = api_get("/api/v1/applications")
+        return render(request, "applications.html", {
+            "items": api_result.get("data", {}).get("items", [])
+        })
+    except WooferAPIError as e:
+        return render(
+            request,
+            "error.html",
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
 
 
 

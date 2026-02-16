@@ -1,0 +1,23 @@
+<h1>My Applications</h1>
+
+{% if items %}
+<ul>
+    {% for app in items %}
+    <li>
+        <strong>{{ app.pet_id }}</strong><br>
+        Organization: {{ app.organization_id }}<br>
+        Status: {{ app.email_status }}<br>
+        Submitted: {{ app.created_at }}<br>
+
+        {% if app.apply_url %}
+        <a href="{{ app.apply_url }}" target="_blank">
+            Continue on organization site
+        </a>
+        {% endif %}
+    </li>
+    <hr>
+    {% endfor %}
+</ul>
+{% else %}
+<p>You have not submitted any applications yet.</p>
+{% endif %}
