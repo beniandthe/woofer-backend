@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import Optional, Iterable
 
 # Keep it deterministic: no randomness, no external calls.
 
@@ -99,3 +99,29 @@ class PetEnrichmentService:
             out = out[: PetEnrichmentService.MAX_LEN - 3].rstrip() + "..."
 
         return out
+
+    @staticmethod
+    def enrich_missing_ai_descriptions(pets: Iterable["Pet"]) -> int:
+        """
+        Deterministic. Non-blocking. Only fills blank/null ai_description.
+        Returns count updated.
+        """
+        updated = 0
+        for pet in pets:
+            try:
+                if pet.ai_description and pet.ai_description.strip():
+                    continue
+                if not pet.raw_description or not pet.raw_description.strip():
+                    continue
+
+                gen = PetEnrichmentService.generate_fun_neutral_summary(pet.raw_description)
+                if not gen:
+                    continue
+
+                pet.ai_description = gen
+                pet.save(update_fields=["ai_description"])
+                updated += 1
+            except Exception:
+                # swallow; ingestion must never fail because enrichment failed
+                continue
+        return updated

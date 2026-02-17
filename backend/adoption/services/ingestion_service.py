@@ -121,14 +121,13 @@ class IngestionService:
 
     @staticmethod
     @transaction.atomic
-    def ingest_canonical(
-        org_dicts: Iterable[Dict[str, Any]],
-        pet_dicts: Iterable[Dict[str, Any]],
-    ) -> IngestResult:
+    def ingest_canonical(org_dicts: Iterable[Dict[str, Any]],pet_dicts: Iterable[Dict[str, Any]],
+) -> IngestResult:
         org_created = org_updated = 0
         pet_created = pet_updated = pet_skipped = 0
 
         pets_seen: Set[str] = set()
+        touched_pets: List["Pet"] = []  # pets created/updated this run (non-skipped)
 
         for org in org_dicts:
             o, created = IngestionService.upsert_organization(org)
@@ -146,10 +145,17 @@ class IngestionService:
             if skipped:
                 pet_skipped += 1
                 continue
+
+            touched_pets.append(p)
+
             if created:
                 pet_created += 1
             else:
                 pet_updated += 1
+
+        # Enrich only pets touched in this ingestion run
+        # Non blocking behavior is handled inside PetEnrichmentService
+        PetEnrichmentService.enrich_missing_ai_descriptions(touched_pets)
 
         return IngestResult(
             organizations_created=org_created,
