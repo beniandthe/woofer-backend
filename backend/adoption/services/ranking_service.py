@@ -14,6 +14,9 @@ BOOST_PROFILE_ACTIVITY_MATCH = 0.10
 BOOST_PROFILE_HOME_MATCH = 0.08
 BOOST_PROFILE_EXPERIENCE_MATCH = 0.07
 
+# NEW: cap total boost influence so boosted pets don't permanently dominate
+MAX_TOTAL_BOOST = 0.40
+
 
 @dataclass(frozen=True)
 class RankedPet:
@@ -83,21 +86,23 @@ class RankingService:
         except RiskClassification.DoesNotExist:
             risk = None
 
+        total_boost = 0.0
+
         if risk:
             if risk.is_long_stay:
-                score += BOOST_LONG_STAY
+                total_boost += BOOST_LONG_STAY
                 reasons.append("LONG_STAY_BOOST")
             if risk.is_senior:
-                score += BOOST_SENIOR
+                total_boost += BOOST_SENIOR
                 reasons.append("SENIOR_BOOST")
             if risk.is_medical:
-                score += BOOST_MEDICAL
+                total_boost += BOOST_MEDICAL
                 reasons.append("MEDICAL_BOOST")
             if risk.is_overlooked_breed_group:
-                score += BOOST_OVERLOOKED
+                total_boost += BOOST_OVERLOOKED
                 reasons.append("OVERLOOKED_GROUP_BOOST")
             if risk.recently_returned:
-                score += BOOST_RETURNED
+                total_boost += BOOST_RETURNED
                 reasons.append("RECENTLY_RETURNED_BOOST")
 
         if profile is not None:
@@ -105,6 +110,11 @@ class RankingService:
             score += p_boost
             reasons.extend(p_reasons)
 
+        # cap total boost
+        if total_boost > MAX_TOTAL_BOOST:
+            total_boost = MAX_TOTAL_BOOST
+        
+        score += total_boost
         return score, reasons
 
     @staticmethod
