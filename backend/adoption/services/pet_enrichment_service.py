@@ -107,6 +107,8 @@ class PetEnrichmentService:
         Returns count updated.
         """
         updated = 0
+        MAX_ENRICH_PER_INGEST = 200
+        pets = pets[:MAX_ENRICH_PER_INGEST]
         for pet in pets:
             try:
                 if pet.ai_description and pet.ai_description.strip():

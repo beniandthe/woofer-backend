@@ -35,9 +35,11 @@
         {% endif %}
 
         {% if pet.ai_description %}
-        <div style="margin-top: 8px;">
-            <small>{{ pet.ai_description }}</small>
-        </div>
+          <div style="margin-top: 8px;">
+              <small>{{ pet.ai_description }}</small>
+        {% else %}
+              <p><em>A little mystery pup — details coming soon.</em></p>
+          </div>
         {% endif %}
 
         {% if pet.organization %}
