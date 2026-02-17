@@ -33,7 +33,8 @@ class PetFeedService:
             .order_by("-listed_at", "-pet_id")[:MAX_CANDIDATES]
         )
 
-        ranked = RankingService.rank(candidates)  # score DESC, pet_id DESC
+        profile = UserProfileService.get_or_create_profile(user)
+        ranked = RankingService.rank(candidates, profile=profile)
 
         if cursor:
             last_score, last_pet_id = decode_rank_cursor(cursor)
