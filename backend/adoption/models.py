@@ -188,7 +188,31 @@ class Application(models.Model):
             models.Index(fields=["created_at"]),
             models.Index(fields=["email_status"]),
         ]
-    
+   
+class PetSeen(models.Model):
+    """
+    User-scoped seen/pass marker.
+    MVP: used to prevent immediate resurfacing in the feed.
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="seen_pets",
+    )
+    pet = models.ForeignKey(
+        Pet,
+        on_delete=models.CASCADE,
+        related_name="seen_by",
+    )
+    seen_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "pet"], name="uniq_petseen_user_pet"),
+        ]
+        indexes = [
+            models.Index(fields=["seen_at"]),
+        ]        
 
 
 class RiskClassification(models.Model):

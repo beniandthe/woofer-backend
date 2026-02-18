@@ -5,6 +5,7 @@ from adoption.services.ranking_service import RankingService, DIVERSITY_TARGET_B
 from adoption.services.ranked_cursor import decode_rank_cursor, encode_rank_cursor
 from adoption.services.user_profile_service import UserProfileService
 from adoption.models import AdopterProfile
+from adoption.models import PetSeen
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 50
@@ -28,6 +29,11 @@ class PetFeedService:
 
         #apply server-side profile filters BEFORE ranking/pagination
         base_qs = PetFeedService._apply_profile_filters(base_qs, profile)
+
+        # exclude seen pets (user-scoped)
+        if user is not None and getattr(user, "is_authenticated", False):
+            seen_ids = PetSeen.objects.filter(user=user).values_list("pet_id", flat=True)
+            base_qs = base_qs.exclude(pet_id__in=seen_ids)
 
         candidates = list(
             base_qs
