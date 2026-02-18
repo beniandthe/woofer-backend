@@ -7,5 +7,6 @@ urlpatterns = [
     path("pets/<uuid:pet_id>/apply/", views.apply_pet, name="pet_apply"),
     path("profile/", views.profile, name="profile"),
     path("applications/", views.applications, name="applications"),
+    path("pets/<uuid:pet_id>/pass/", views.pass_pet, name="pass_pet"),
 
 ]

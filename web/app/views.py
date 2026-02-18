@@ -197,5 +197,16 @@ def applications(request):
             status=502,
         )
 
+def pass_pet(request, pet_id):
+    try:
+        api_post(f"/api/v1/pets/{pet_id}/pass", {})
+        return redirect("/?msg=passed")
+    except WooferAPIError as e:
+        return render(
+            request,
+            "error.html",
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
 
 

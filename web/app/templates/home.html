@@ -14,6 +14,10 @@
 <p><strong>Already liked.</strong></p>
 {% endif %}
 
+{% if request.GET.msg == "passed" %}
+<p>Passed: Showing you someone new.</p>
+{% endif %}
+
 <h1>Woofer</h1>
 <p>
     Browse adoptable pets from local rescues.
@@ -35,11 +39,11 @@
         {% endif %}
 
         {% if pet.ai_description %}
-          <div style="margin-top: 8px;">
-              <small>{{ pet.ai_description }}</small>
-        {% else %}
-              <p><em>A little mystery pup — details coming soon.</em></p>
-          </div>
+        <div style="margin-top: 8px;">
+            <small>{{ pet.ai_description }}</small>
+            {% else %}
+            <p><em>A little mystery pup — details coming soon.</em></p>
+        </div>
         {% endif %}
 
         {% if pet.organization %}
@@ -60,6 +64,11 @@
             <form method="post" action="{% url 'pet_apply' pet.pet_id %}">
                 {% csrf_token %}
                 <button type="submit">Apply</button>
+            </form>
+
+            <form method="post" action="/pets/{{ pet.pet_id }}/pass/" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Pass</button>
             </form>
         </div>
         {% endif %}
@@ -93,10 +102,10 @@
     {% endfor %}
 </ul>
     {% else %}
-      <p><strong>No pets available right now.</strong></p>
-      <p><small>Try increasing distance or check back later.</small></p>
+<p><strong>No pets available right now.</strong></p>
+<p><small>Try increasing distance or check back later.</small></p>
     {% endif %}
   {% endwith %}
 {% else %}
-  <p>API returned ok=false</p>
+<p>API returned ok=false</p>
 {% endif %}
