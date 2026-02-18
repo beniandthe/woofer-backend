@@ -17,6 +17,11 @@ BOOST_PROFILE_EXPERIENCE_MATCH = 0.07
 # NEW: cap total boost influence so boosted pets don't permanently dominate
 MAX_TOTAL_BOOST = 0.40
 
+# Feed diversity (deterministic) — used by PetFeedService later
+DIVERSITY_TARGET_BOOSTED_RATIO = 0.40  # 40% boosted items per page (when available)
+DIVERSITY_RATIO_MIN = 0.20
+DIVERSITY_RATIO_MAX = 0.60
+
 
 @dataclass(frozen=True)
 class RankedPet:
@@ -133,4 +138,13 @@ class RankingService:
     def reasons_for_pet(pet: Pet) -> List[str]:
         _, reasons = RankingService.score_pet(pet)
         return reasons
+
+    @staticmethod
+    def is_boosted(reasons: List[str]) -> bool:
+        """
+        A ranked pet is considered "boosted" if it has any bias-correction reasons.
+        Deterministic, server-only. Used for feed diversity slotting.
+        """
+        return bool(reasons)
+
 
