@@ -22,6 +22,10 @@ DIVERSITY_TARGET_BOOSTED_RATIO = 0.40  # 40% boosted items per page (when availa
 DIVERSITY_RATIO_MIN = 0.20
 DIVERSITY_RATIO_MAX = 0.60
 
+# Diversity targets (tunable, deterministic)
+DIVERSITY_TARGET_BOOSTED_RATIO = 0.60  # existing
+DIVERSITY_MIN_NORMAL_PER_PAGE = 1      # if normal pets exist
+
 
 @dataclass(frozen=True)
 class RankedPet:
