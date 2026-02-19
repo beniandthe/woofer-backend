@@ -72,7 +72,7 @@ class PetsFeedTests(TestCase):
         ids2 = {item["pet_id"] for item in p2["data"]["items"]}
         self.assertTrue(ids1.isdisjoint(ids2))
 
-    def test_feed_includes_interest_state(self):
+    def test_feed_excludes_interested_pets(self):
         # Create interest for this user+pet
         Interest.objects.create(
             user=self.user,
@@ -90,10 +90,10 @@ class PetsFeedTests(TestCase):
         self.assertTrue(payload["ok"])
 
         items = payload["data"]["items"]
-        item = next(i for i in items if i["pet_id"] == str(self.pet.pet_id))
+        ids = [i["pet_id"] for i in items]
 
-        self.assertTrue(item["is_interested"])
-        self.assertEqual(item["interest_status"], "SENT")
+        # Sprint 11.6 behavior: liked pets do not appear in feed
+        self.assertNotIn(str(self.pet.pet_id), ids)
 
 
 
