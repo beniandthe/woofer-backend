@@ -10,7 +10,7 @@ def home(request):
     Calls backend /api/health and prints the enveloped response.
     """
     try:
-        api_result = api_get("/api/v1/pets?limit=5")
+        api_result = api_get("/api/v1/pets?limit=1")
         WHY_SHOWN_COPY = {
     "LONG_STAY_BOOST": {
         "label": "Waiting longer",

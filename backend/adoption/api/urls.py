@@ -21,5 +21,6 @@ urlpatterns = [
     path("pets/<uuid:pet_id>/apply", PetApplyCreateView.as_view(), name="v1-pets-apply"),
     path("applications", ApplicationsListView.as_view()),
     path("pets/<uuid:pet_id>/pass", PetPassView.as_view(), name="pet-pass"),
+
 ]
 

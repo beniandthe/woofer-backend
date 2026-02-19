@@ -1,11 +1,10 @@
 from typing import Optional, Tuple, List
 import math
-from adoption.models import Pet
+from adoption.models import Pet, AdopterProfile, Interest, PetSeen, Application
 from adoption.services.ranking_service import RankingService, DIVERSITY_TARGET_BOOSTED_RATIO, DIVERSITY_MIN_NORMAL_PER_PAGE
 from adoption.services.ranked_cursor import decode_rank_cursor, encode_rank_cursor
+from django.db.models import Subquery
 from adoption.services.user_profile_service import UserProfileService
-from adoption.models import AdopterProfile
-from adoption.models import PetSeen
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 50
@@ -30,10 +29,25 @@ class PetFeedService:
         #apply server-side profile filters BEFORE ranking/pagination
         base_qs = PetFeedService._apply_profile_filters(base_qs, profile)
 
-        # exclude seen pets (user-scoped)
+        # Exclude "already decided" pets (user-scoped)
         if user is not None and getattr(user, "is_authenticated", False):
-            seen_ids = PetSeen.objects.filter(user=user).values_list("pet_id", flat=True)
-            base_qs = base_qs.exclude(pet_id__in=seen_ids)
+            
+            # liked/interest
+            liked_pet_ids = Interest.objects.filter(user=user).values("pet_id")
+
+            # applied
+            applied_pet_ids = Application.objects.filter(user=user).values("pet_id") 
+
+            # passed/seen
+            # If PetSeen == "seen means passed", then just filter by user.
+            passed_pet_ids = PetSeen.objects.filter(user=user).values("pet_id")
+
+            base_qs = (
+                base_qs
+                .exclude(pet_id__in=Subquery(liked_pet_ids))
+                .exclude(pet_id__in=Subquery(applied_pet_ids))
+                .exclude(pet_id__in=Subquery(passed_pet_ids))
+            )
 
         candidates = list(
             base_qs

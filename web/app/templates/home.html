@@ -102,8 +102,9 @@
     {% endfor %}
 </ul>
     {% else %}
-<p><strong>No pets available right now.</strong></p>
-<p><small>Try increasing distance or check back later.</small></p>
+<p><strong>No pets match your current filters.</strong></p>
+<p><small>Try increasing max distance or updating your profile.</small></p>
+<a href="/profile/">Edit profile</a>
     {% endif %}
   {% endwith %}
 {% else %}
