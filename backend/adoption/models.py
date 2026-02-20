@@ -214,6 +214,41 @@ class PetSeen(models.Model):
             models.Index(fields=["seen_at"]),
         ]        
 
+class PetExposureStats(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="pet_exposure_stats",
+    )
+    pet = models.ForeignKey(
+        "adoption.Pet",
+        on_delete=models.CASCADE,
+        related_name="exposure_stats",
+    )
+
+    impressions_count = models.PositiveIntegerField(default=0)
+    likes_count = models.PositiveIntegerField(default=0)
+    applies_count = models.PositiveIntegerField(default=0)
+    passes_count = models.PositiveIntegerField(default=0)
+
+    last_impression_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "pet"],
+                name="uniq_pet_exposure_stats_user_pet",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["user", "last_impression_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"PetExposureStats(user={self.user_id}, pet={self.pet_id})"
 
 class RiskClassification(models.Model):
     pet = models.OneToOneField(Pet, on_delete=models.CASCADE, primary_key=True, related_name="risk")
@@ -273,3 +308,5 @@ class ProviderSyncState(models.Model):
 
     def __str__(self):
         return f"{self.provider} sync state"
+
+    
