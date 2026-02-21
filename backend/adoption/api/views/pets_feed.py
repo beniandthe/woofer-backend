@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from adoption.models import Interest
 from adoption.api.serializers.pets_feed import PetFeedItemSerializer
 from adoption.services.pet_feed_service import PetFeedService
+from adoption.services.pet_impression_service import PetImpressionService
 
 class PetsFeedView(APIView):
     permission_classes = [IsAuthenticated]
@@ -19,7 +20,19 @@ class PetsFeedView(APIView):
             except ValueError:
                 limit = None  # lean MVP: ignore bad limit
 
+        # Ensure limit key matches actual feed behavior
+        effective_limit = PetFeedService.normalize_limit(limit)
+
         items, next_cursor = PetFeedService.get_feed(request.user, cursor, limit)
+
+        # Record impressions deterministically (idempotent per cursor+limit page)
+        PetImpressionService.record_feed_impressions(
+            user=request.user,
+            pets=items,
+            cursor=cursor,
+            limit=effective_limit,
+        )
+
 
         #interest state for this page (server-side truth)
         pet_ids = [i.pet_id for i in items]  # items are Pet objects (feed items)

@@ -13,9 +13,14 @@ MAX_CANDIDATES = 500  # MVP guardrail
 
 class PetFeedService:
     @staticmethod
-    def get_feed(user, cursor: Optional[str], limit: Optional[int]) -> Tuple[List[Pet], Optional[str]]:
+    def normalize_limit(limit: Optional[int]) -> int:
         lim = limit or DEFAULT_LIMIT
         lim = min(max(lim, 1), MAX_LIMIT)
+        return lim
+
+    @staticmethod
+    def get_feed(user, cursor: Optional[str], limit: Optional[int]) -> Tuple[List[Pet], Optional[str]]:
+        lim = PetFeedService.normalize_limit(limit)
         profile = UserProfileService.get_or_create_profile(user)
 
 
