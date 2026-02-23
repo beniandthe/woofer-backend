@@ -17,7 +17,7 @@ BOOST_PROFILE_EXPERIENCE_MATCH = 0.07
 # NEW: cap total boost influence so boosted pets don't permanently dominate
 MAX_TOTAL_BOOST = 0.40
 
-# Feed diversity (deterministic) — used by PetFeedService later
+# Feed diversity (deterministic) ï¿½ used by PetFeedService later
 DIVERSITY_TARGET_BOOSTED_RATIO = 0.40  # 40% boosted items per page (when available)
 DIVERSITY_RATIO_MIN = 0.20
 DIVERSITY_RATIO_MAX = 0.60
