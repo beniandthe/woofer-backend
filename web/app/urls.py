@@ -8,5 +8,6 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("applications/", views.applications, name="applications"),
     path("pets/<uuid:pet_id>/pass/", views.pass_pet, name="pass_pet"),
+    path("interests/", views.interests, name="interests"),
 
 ]

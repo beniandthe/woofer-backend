@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Woofer - Liked Pets</title>
+</head>
+<body>
+    <p><a href="/">← Home</a></p>
+    <h1>Liked Pets</h1>
+
+    {% if items %}
+    <ul>
+        {% for item in items %}
+        {% with pet=item.pet %}
+        <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
+            <strong>{{ pet.name }}</strong>
+            {% if pet.organization %}
+            — <em>{{ pet.organization.name }}</em>
+            {% if pet.organization.location %} ({{ pet.organization.location }}){% endif %}
+            {% endif %}
+
+            {% if pet.ai_description %}
+            <div style="margin-top: 8px;">
+                <small>{{ pet.ai_description }}</small>
+            </div>
+            {% endif %}
+
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <form method="post" action="{% url 'pet_apply' pet.pet_id %}">
+                    {% csrf_token %}
+                    <button type="submit">Apply</button>
+                </form>
+
+                <form method="post" action="{% url 'pass_pet' pet.pet_id %}">
+                    {% csrf_token %}
+                    <button type="submit">Pass</button>
+                </form>
+            </div>
+        </li>
+        {% endwith %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You haven’t liked any pets yet.</p>
+    <p><a href="/">Browse pets</a></p>
+    {% endif %}
+</body>
+</html>

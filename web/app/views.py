@@ -95,7 +95,8 @@ def apply_pet(request, pet_id):
         return render(
             request,
             "apply_confirmation.html",
-            {
+            {   
+                "message": "Application request sent",
                 "email_status": data.get("email_status"),
                 "disclaimer": "This is not an approval. The rescue will contact you directly.",
                 "apply_url": data.get("apply_url"),
@@ -166,6 +167,7 @@ def profile(request):
                 "has_cats": request.POST.get("has_cats") == "on",
                 "activity_level": request.POST.get("activity_level") or "MED",
                 "experience_level": request.POST.get("experience_level") or "SOME",
+                "home_postal_code": (request.POST.get("home_postal_code") or "").strip(),
                 "preferences": preferences,
             }
 
@@ -209,4 +211,21 @@ def pass_pet(request, pet_id):
             status=502,
         )
 
+def interests(request):
+    """
+    Saved / liked pets list.
+    Uses backend /api/v1/interests (already canonical + enveloped).
+    """
+    try:
+        api_result = api_get("/api/v1/interests")
+        return render(request, "interests.html", {
+            "items": api_result.get("data", {}).get("items", [])
+        })
+    except WooferAPIError as e:
+        return render(
+            request,
+            "error.html",
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
 
