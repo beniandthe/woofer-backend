@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.authentication import BaseAuthentication
+from core.dev_auth_flags import dev_header_auth_enabled
 
 class DevHeaderAuthentication(BaseAuthentication):
     """
@@ -9,7 +10,7 @@ class DevHeaderAuthentication(BaseAuthentication):
       X-Woofer-Dev-User: <username>
     """
     def authenticate(self, request):
-        if not (getattr(settings, "WOOFER_DEV_AUTH", False) and settings.DEBUG):
+        if not dev_header_auth_enabled():
             return None
 
         username = request.headers.get("X-Woofer-Dev-User")

@@ -15,10 +15,9 @@ import os
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
-
+# Dev auth fence: must be explicitly enabled (defaults OFF)
+WOOFER_ALLOW_DEV_AUTH = os.getenv("WOOFER_ALLOW_DEV_AUTH", "0") == "1"
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
