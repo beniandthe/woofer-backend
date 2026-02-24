@@ -1,0 +1,40 @@
+{
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "application_id": "00000000-0000-0000-0000-000000000001",
+        "pet_id": "00000000-0000-0000-0000-000000000002",
+        "organization_id": "00000000-0000-0000-0000-000000000003",
+        "email_status": "SENT",
+        "created_at": "2026-02-23T00:00:00Z",
+        "apply_url": "https://example.org/apply",
+        "apply_hint": "Apply via Test Org",
+        "pet": {
+          "pet_id": "00000000-0000-0000-0000-000000000002",
+          "name": "Pet 1",
+          "age_group": "UNKNOWN",
+          "size": "UNKNOWN",
+          "photos": [],
+          "ai_description": "ai",
+          "temperament_tags": [],
+          "organization": {
+            "organization_id": "00000000-0000-0000-0000-000000000003",
+            "name": "Test Org",
+            "location": "LA"
+          }
+        },
+        "handoff": {
+          "version": "v1",
+          "type": "APPLICATION_HANDOFF",
+          "generated_at": "2026-02-23T00:00:00Z",
+          "disclaimer": { "application_is_not_approval": true },
+          "apply_url_present": true
+        }
+      }
+    ]
+  },
+  "meta": {},
+  "request_id": "contract-fixture",
+  "timestamp": "2026-02-23T00:00:00Z"
+}

@@ -34,6 +34,8 @@ class ApplicationsListTests(TestCase):
             photos=[],
             ai_description="ai",
             temperament_tags=[],
+            apply_url="https://example.org/apply",
+            apply_hint="Apply via Test Org",
         )
 
         Application.objects.create(
@@ -41,6 +43,17 @@ class ApplicationsListTests(TestCase):
             pet=self.pet,
             organization=self.org,
             payload={},
+            handoff_payload={
+                "version": "v1",
+                "type": "APPLICATION_HANDOFF",
+                "generated_at": timezone.now().isoformat(),
+                "pet": {
+                    "apply_url": "https://example.org/apply",
+                },
+                "disclaimer": {
+                    "application_is_not_approval": True,
+                },
+            },
         )
 
     def test_list_returns_enveloped_items(self):
@@ -56,4 +69,26 @@ class ApplicationsListTests(TestCase):
         items = payload["data"]["items"]
         self.assertEqual(len(items), 1)
 
-        self.assertEqual(items[0]["pet_id"], str(self.pet.pet_id))
+        item = items[0]
+        self.assertEqual(item["pet_id"], str(self.pet.pet_id))
+
+        # demo-grade fields
+        self.assertIn("apply_url", item)
+        self.assertIn("apply_hint", item)
+        self.assertEqual(item["apply_url"], "https://example.org/apply")
+        self.assertEqual(item["apply_hint"], "Apply via Test Org")
+
+        self.assertIn("email_status", item)
+        self.assertIn("created_at", item)
+
+        # mini pet card
+        self.assertIn("pet", item)
+        self.assertEqual(item["pet"]["pet_id"], str(self.pet.pet_id))
+        self.assertEqual(item["pet"]["organization"]["organization_id"], str(self.org.organization_id))
+
+        # handoff summary (whitelisted)
+        self.assertIn("handoff", item)
+        self.assertEqual(item["handoff"]["version"], "v1")
+        self.assertEqual(item["handoff"]["type"], "APPLICATION_HANDOFF")
+        self.assertTrue(item["handoff"]["disclaimer"]["application_is_not_approval"])
+        self.assertTrue(item["handoff"]["apply_url_present"])
