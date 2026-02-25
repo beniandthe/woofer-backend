@@ -6,7 +6,9 @@ class ApplicationsListItemSerializer(serializers.ModelSerializer):
     application_id = serializers.UUIDField(read_only=True)
     pet_id = serializers.UUIDField(source="pet.pet_id", read_only=True)
     organization_id = serializers.UUIDField(source="organization.organization_id", read_only=True)
-
+    pet_name = serializers.CharField(source="pet.name", read_only=True)
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    organization_location = serializers.CharField(source="organization.location", read_only=True)
     email_status = serializers.CharField(read_only=True)
     apply_url = serializers.CharField(source="pet.apply_url", read_only=True)
     apply_hint = serializers.CharField(source="pet.apply_hint", read_only=True)
@@ -19,7 +21,10 @@ class ApplicationsListItemSerializer(serializers.ModelSerializer):
         fields = [
             "application_id",
             "pet_id",
+            "pet_name",
             "organization_id",
+            "organization_name",
+            "organization_location",
             "email_status",
             "created_at",
             "apply_url",

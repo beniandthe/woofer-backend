@@ -82,6 +82,9 @@ class ApplicationsListTests(TestCase):
         self.assertIn("created_at", item)
 
         # mini pet card
+        self.assertEqual(item["pet_name"], "Pet 1")
+        self.assertEqual(item["organization_name"], "Test Org")
+        self.assertEqual(item["organization_location"], "LA")
         self.assertIn("pet", item)
         self.assertEqual(item["pet"]["pet_id"], str(self.pet.pet_id))
         self.assertEqual(item["pet"]["organization"]["organization_id"], str(self.org.organization_id))

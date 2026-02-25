@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated
 from adoption.models import Application
 from adoption.api.serializers.applications_list import ApplicationsListItemSerializer
 
-
 class ApplicationsListView(APIView):
     permission_classes = [IsAuthenticated]
 
