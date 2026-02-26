@@ -156,7 +156,7 @@ class PetFeedService:
                 if md <= 10:
                     # Very local exact ZIP
                     qs = qs.filter(organization__postal_code=home_zip)
-                elif md <= 100:
+                elif md <= 50:
                     # Regional ZIP prefix 
                     prefix = home_zip[:3]
                     if prefix:
