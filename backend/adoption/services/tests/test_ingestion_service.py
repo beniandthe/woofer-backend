@@ -113,7 +113,7 @@ class IngestionListedAtTests(TestCase):
             "status": "ACTIVE",
         }])
 
-        # Second ingest with a "newer" listed_at (provider changed timestamps)
+        # Second ingest with a "newer" listed_at provider changed timestamps
         IngestionService.ingest_canonical(org_dicts, [{
             "source": "RESCUEGROUPS",
             "external_id": "P1",

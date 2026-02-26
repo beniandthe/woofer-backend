@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from core.dev_auth_flags import dev_header_auth_enabled
 
 class DevHeaderAuthMiddleware:
     """
@@ -13,7 +14,7 @@ class DevHeaderAuthMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if getattr(settings, "WOOFER_DEV_AUTH", False) and settings.DEBUG:
+        if dev_header_auth_enabled():
             username = request.headers.get("X-Woofer-Dev-User")
             if username:
                 User = get_user_model()

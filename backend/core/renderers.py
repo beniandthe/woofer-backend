@@ -15,7 +15,7 @@ class EnvelopeJSONRenderer(JSONRenderer):
         response = renderer_context.get("response")
         request = renderer_context.get("request")
 
-        # If DRF is already returning an error envelope, do not double-wrap
+        # If DRF is already returning an error envelope, do not double wrap
         if isinstance(data, dict) and data.get("ok") in (True, False) and ("data" in data or "error" in data):
             return super().render(data, accepted_media_type, renderer_context)
 
@@ -25,7 +25,7 @@ class EnvelopeJSONRenderer(JSONRenderer):
         status_code = getattr(response, "status_code", 200)
         is_error = status_code >= 400
 
-        # Success paths only; errors will be formatted by exception handler
+        # Success paths only, errors will be formatted by exception handler
         if not is_error:
             envelope = {
                 "ok": True,
@@ -36,7 +36,7 @@ class EnvelopeJSONRenderer(JSONRenderer):
             }
             return super().render(envelope, accepted_media_type, renderer_context)
 
-        # For safety: if an error leaks here, still wrap minimally
+        # For safety - if an error leaks here, still wrap minimally
         envelope = {
             "ok": False,
             "error": {

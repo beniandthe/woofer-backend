@@ -38,7 +38,6 @@ class ApplicationHandoffTests(TestCase):
         # ensure profile exists with prefs
         profile, _ = AdopterProfile.objects.get_or_create(user=self.user)
         profile.preferences = {"max_distance_miles": 50}
-        # if you have this field
         if hasattr(profile, "home_postal_code"):
             profile.home_postal_code = "90012"
         profile.save()

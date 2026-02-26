@@ -3,8 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from adoption.models import Application
-from adoption.api.serializers.application import ApplicationCreateResponseSerializer
-
+from adoption.api.serializers.applications_list import ApplicationsListItemSerializer
 
 class ApplicationsListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -18,5 +17,5 @@ class ApplicationsListView(APIView):
         )
 
         return Response({
-            "items": ApplicationCreateResponseSerializer(apps, many=True).data
+            "items": ApplicationsListItemSerializer(apps, many=True).data
         })

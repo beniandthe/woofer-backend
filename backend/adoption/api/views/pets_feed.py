@@ -17,7 +17,7 @@ class PetsFeedView(APIView):
             try:
                 limit = int(limit_raw)
             except ValueError:
-                limit = None  # lean MVP: ignore bad limit
+                limit = None  # ignore bad limit
 
         items, next_cursor = PetFeedService.get_feed(request.user, cursor, limit)
 

@@ -1,16 +1,22 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8" />
     <title>Woofer Web - API Error</title>
-  </head>
-  <body>
+</head>
+<body>
+    <p>
+        <a href="/">Home</a> |
+        <a href="/interests/">Saved</a> |
+        <a href="/applications/">My Applications</a> |
+        <a href="/profile/">Profile</a>
+    </p>
+
     <h2>API Error</h2>
-	<p>We couldn’t complete your request. Details below (verbatim):</p>
-	<p><strong>Status:</strong> {{ status_code }}</p>
-	<pre>{{ payload }}</pre>
-  </body>
+    <p>We couldn’t complete your request. Details below (verbatim):</p>
+    <p><strong>Status:</strong> {{ status_code }}</p>
+    <pre>{{ payload }}</pre>
 
-<p><a href="{% url 'home' %}">Back to pets</a></p>
-
+    <p><a href="{% url 'home' %}">Back to pets</a></p>
+</body>
 </html>

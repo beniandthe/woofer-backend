@@ -11,6 +11,6 @@ class PetEnrichmentServiceTests(SimpleTestCase):
         out = PetEnrichmentService.generate_fun_neutral_summary(raw)
         self.assertIn("sweet", out.lower())
         self.assertIn("friendly", out.lower())
-        # neutral: should not contain hype words we didn't provide
+        # neutral, should not contain hype words we didn't provide
         self.assertNotIn("perfect", out.lower())
         self.assertTrue(len(out) <= PetEnrichmentService.MAX_LEN)

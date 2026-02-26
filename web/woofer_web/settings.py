@@ -19,11 +19,11 @@ load_dotenv(".env.dev")
 WOOFER_API_BASE_URL = os.getenv("WOOFER_API_BASE_URL", "http://127.0.0.1:8000")
 WOOFER_DEV_USER = os.getenv("WOOFER_DEV_USER", "")
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Build paths inside the project: BASE_DIR / 'subdir'
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
+# Quick start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!

@@ -15,10 +15,9 @@ import os
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev")
-
+# Dev auth fence, must be explicitly enabled (defaults OFF)
+WOOFER_ALLOW_DEV_AUTH = os.getenv("WOOFER_ALLOW_DEV_AUTH", "0") == "1"
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
@@ -28,7 +27,7 @@ RESCUEGROUPS_API_BASE_URL = os.getenv("RESCUEGROUPS_API_BASE_URL", "https://api.
 
 WOOFER_NOTIFICATIONS_ENABLED = os.getenv("WOOFER_NOTIFICATIONS_ENABLED", "1") == "1"
 WOOFER_NOTIFICATIONS_FORCE_FAIL = os.getenv("WOOFER_NOTIFICATIONS_FORCE_FAIL", "0") == "1"
-WOOFER_NOTIFICATIONS_BACKEND = os.getenv("WOOFER_NOTIFICATIONS_BACKEND", "console")  # console|email (future)
+WOOFER_NOTIFICATIONS_BACKEND = os.getenv("WOOFER_NOTIFICATIONS_BACKEND", "console")  # console - email 
 
 
 ALLOWED_HOSTS = [
@@ -69,7 +68,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],  # no web UI work in this story
+        "DIRS": [],  
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

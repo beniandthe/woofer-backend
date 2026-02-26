@@ -25,6 +25,12 @@
     Applying does not guarantee adoption — rescues follow up directly.
 </p>
 
+<p>
+    <a href="/interests/">Saved</a> |
+    <a href="/applications/">My Applications</a> |
+    <a href="/profile/">Profile</a>
+</p>
+
 <h2>Pets Feed</h2>
 
 {% if api_result.ok %}
@@ -102,9 +108,18 @@
     {% endfor %}
 </ul>
     {% else %}
-<p><strong>No pets match your current filters.</strong></p>
-<p><small>Try increasing max distance or updating your profile.</small></p>
-<a href="/profile/">Edit profile</a>
+<p><strong>You’re caught up.</strong></p>
+<p>
+    <small>
+        We don’t have any new pets to show right now based on your current profile and what you’ve already liked/applied/passed.
+    </small>
+</p>
+
+<ul>
+    <li><a href="/profile/">Adjust your profile (distance, ZIP, etc.)</a></li>
+    <li><a href="/interests/">Review your saved pets</a></li>
+    <li><a href="/applications/">Review your applications</a></li>
+</ul>
     {% endif %}
   {% endwith %}
 {% else %}

@@ -50,7 +50,7 @@ class ApplyContractTests(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        # Canon: parse JSON from resp.content to avoid DRF abstraction drift
+        # parse JSON from resp.content to avoid DRF abstraction drift
         payload = json.loads(resp.content.decode("utf-8"))
 
         self.assertIn("ok", payload)
@@ -72,7 +72,7 @@ class ApplyContractTests(TestCase):
         ]:
             self.assertIn(key, data)
 
-        # Sanity: ids match
+        # Sanity - ids match
         self.assertEqual(data["pet_id"], str(self.pet.pet_id))
         self.assertEqual(data["organization_id"], str(self.org.organization_id))
 

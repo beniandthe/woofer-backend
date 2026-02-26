@@ -71,7 +71,7 @@ class IngestionService:
 
         incoming_listed_at = pet.get("listed_at")
 
-        # Preserve listed_at once set (fairness: long-stay must not reset on re-sync)
+        # Preserve listed_at once set (fairness long-stay must not reset on re-sync)
         existing = (
             Pet.objects.filter(source=source, external_id=str(external_id))
             .only("listed_at")
@@ -82,7 +82,7 @@ class IngestionService:
         else:
             listed_at = incoming_listed_at or timezone.now()
 
-        # --- Descriptions (raw + AI) ---
+        # Descriptions (raw + AI) 
         raw_desc = pet.get("raw_description") or ""
         ai_desc = pet.get("ai_description")
 
@@ -104,7 +104,7 @@ class IngestionService:
             "apply_hint": pet.get("apply_hint", "") or "",
         }
 
-        # If upstream provides ai_description, keep it; otherwise generate from raw_description
+        # If upstream provides ai_description, keep it, otherwise generate from raw_description
         if ai_desc:
             defaults["ai_description"] = ai_desc
         else:
@@ -127,7 +127,7 @@ class IngestionService:
         pet_created = pet_updated = pet_skipped = 0
 
         pets_seen: Set[str] = set()
-        touched_pets: List["Pet"] = []  # pets created/updated this run (non-skipped)
+        touched_pets: List["Pet"] = []  # pets created/updated this run (non skipped)
 
         for org in org_dicts:
             o, created = IngestionService.upsert_organization(org)

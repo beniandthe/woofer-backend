@@ -11,14 +11,14 @@ class InterestService:
         - If Interest exists, return it.
         - Otherwise create it.
         """
-        # Ensure pet exists (404 handled by caller via get_object_or_404 or DoesNotExist)
+        # Ensure pet exists 404 handled by caller via get_object_or_404 or DoesNotExist
         pet = Pet.objects.get(pet_id=pet_id)
 
         try:
             with transaction.atomic():
                 interest = Interest.objects.create(user=user, pet=pet)
                 created = True
-                # Non-blocking notification
+                # Non blocking notification
                 NotificationService.notify_interest_created(interest)
                 return interest, created
         except IntegrityError:

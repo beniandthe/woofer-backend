@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Woofer - Saved</title>
+</head>
+<body>
+    <p>
+        <a href="/">Home</a> |
+        <a href="/interests/">Saved</a> |
+        <a href="/applications/">My Applications</a> |
+        <a href="/profile/">Profile</a>
+    </p>
+
+    <h1>Saved (Liked) Pets</h1>
+
+    {% if items %}
+    <ul>
+        {% for interest in items %}
+        {% with pet=interest.pet %}
+        <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
+            <strong>{{ pet.name|default:"(Unnamed pet)" }}</strong>
+            {% if pet.organization %}
+            — <em>{{ pet.organization.name }}{% if pet.organization.location %} ({{ pet.organization.location }}){% endif %}</em>
+            {% endif %}
+
+            {% if pet.ai_description %}
+            <div style="margin-top: 8px;">
+                <small>{{ pet.ai_description }}</small>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 8px;">
+                <small><strong>Saved ✓</strong></small>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-top:8px;">
+                <form method="post" action="{% url 'pet_apply' pet.pet_id %}">
+                    {% csrf_token %}
+                    <button type="submit">Apply</button>
+                </form>
+
+                <form method="post" action="/pets/{{ pet.pet_id }}/pass/" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Pass</button>
+                </form>
+            </div>
+        </li>
+        {% endwith %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You haven’t saved any pets yet.</p>
+    <p><a href="/">Browse the feed</a></p>
+    {% endif %}
+</body>
+</html>

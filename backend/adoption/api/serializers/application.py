@@ -14,6 +14,10 @@ class ApplicationCreateResponseSerializer(serializers.ModelSerializer):
     email_status = serializers.CharField(read_only=True)
     apply_url = serializers.CharField(source="pet.apply_url", read_only=True)
     apply_hint = serializers.CharField(source="pet.apply_hint", read_only=True)
+    pet_name = serializers.CharField(source="pet.name", read_only=True)
+    organization_name = serializers.CharField(source="organization.name", read_only=True)
+    organization_location = serializers.CharField(source="organization.location", read_only=True)
+
 
     class Meta:
         model = Application
@@ -21,9 +25,12 @@ class ApplicationCreateResponseSerializer(serializers.ModelSerializer):
             "application_id",
             "pet_id",
             "organization_id",
+            "organization_name",
+            "organization_location",
             "email_status",
             "payload",
             "apply_url",
             "apply_hint",
+            "pet_name",
             "created_at",
         ]

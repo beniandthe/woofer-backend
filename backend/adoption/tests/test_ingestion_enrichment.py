@@ -25,14 +25,13 @@ class IngestionEnrichmentTests(TestCase):
 
         raw_desc = "Sweet, gentle dog who loves people and enjoys calm walks. Good with kids."
         expected = PetEnrichmentService.generate_fun_neutral_summary(raw_desc)
-        self.assertTrue(expected)  # sanity: generator must return something
+        self.assertTrue(expected)  # sanity, generator must return something
 
         pet_dicts = [
             {
                 "source": "RESCUEGROUPS",
                 "external_id": "P1",
-                # IMPORTANT: this key must match what your upsert_pet expects to link orgs.
-                # If your upsert_pet uses a different key name, change it here to match.
+                # this key must match what upsert_pet expects to link orgs
                 "organization_source_org_id": "RG123",
 
                 "name": "Bella",

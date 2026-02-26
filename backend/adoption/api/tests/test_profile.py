@@ -26,7 +26,7 @@ class ProfileEndpointTests(TestCase):
         data = payload["data"]
         self.assertEqual(data["user_id"], str(self.user.id))
 
-        # Default-based optional fields (matches your current behavior)
+        # Default-based optional fields 
         self.assertEqual(data["home_type"], "OTHER")
         self.assertEqual(data["activity_level"], "MED")
         self.assertEqual(data["experience_level"], "SOME")

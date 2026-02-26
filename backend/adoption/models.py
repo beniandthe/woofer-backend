@@ -6,7 +6,7 @@ from django.utils import timezone
 
 class Organization(models.Model):
     organization_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    source = models.CharField(max_length=50)  # PETFINDER | RESCUEGROUPS (enum later)
+    source = models.CharField(max_length=50)  # PETFINDER, RESCUEGROUPS (enum later)
     source_org_id = models.CharField(max_length=255)  # provider org id
     name = models.CharField(max_length=255)
     contact_email = models.EmailField(blank=True, null=True)
@@ -41,15 +41,15 @@ class Pet(models.Model):
         INACTIVE = "INACTIVE"
 
     pet_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    source = models.CharField(max_length=50)  # PETFINDER | RESCUEGROUPS
+    source = models.CharField(max_length=50)  
     external_id = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="pets")
 
     name = models.CharField(max_length=255)
     species = models.CharField(max_length=10, choices=Species.choices, default=Species.DOG)
 
-    age_group = models.CharField(max_length=20, blank=True, null=True)  # PUPPY|ADULT|SENIOR (enum later)
-    size = models.CharField(max_length=5, blank=True, null=True)       # S|M|L|XL (enum later)
+    age_group = models.CharField(max_length=20, blank=True, null=True)  
+    size = models.CharField(max_length=5, blank=True, null=True)       
     sex = models.CharField(max_length=20, blank=True, null=True)
 
     breed_primary = models.CharField(max_length=255, blank=True, null=True)
@@ -58,7 +58,7 @@ class Pet(models.Model):
     apply_url = models.URLField(blank=True, default="")
     apply_hint = models.CharField(max_length=255, blank=True, default="")
     
-    # keep simple for MVP (can normalize later)
+    # keep simple for MVP, can normalize later
     photos = models.JSONField(default=list, blank=True)
     raw_description = models.TextField(blank=True, null=True)
     ai_description = models.TextField(blank=True, null=True)
@@ -175,7 +175,7 @@ class Application(models.Model):
     pet = models.ForeignKey(Pet, on_delete=models.CASCADE, related_name="applications")
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="applications")
     email_status = models.CharField(max_length=10, choices=EmailStatus.choices, default=EmailStatus.SENT,)
-    payload = models.JSONField(default=dict, blank=True)  # adopter-entered fields for handoff
+    payload = models.JSONField(default=dict, blank=True)  # adopter entered fields for handoff
     profile_snapshot = models.JSONField(default=dict, blank=True)
     handoff_payload = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -235,7 +235,7 @@ class VisibilityScore(models.Model):
     boost_long_stay = models.FloatField(default=0.0)
     boost_risk = models.FloatField(default=0.0)
     boost_returned = models.FloatField(default=0.0)
-    penalty_high_adopt_prob = models.FloatField(default=0.0)  # future
+    penalty_high_adopt_prob = models.FloatField(default=0.0)  
     final_score = models.FloatField(default=0.0)
 
     computed_at = models.DateTimeField(auto_now=True)

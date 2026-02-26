@@ -12,7 +12,7 @@ class HandoffPayloadBuilder:
 
     @staticmethod
     def build(*, pet: Pet, organization: Organization, profile: AdopterProfile, user) -> Dict[str, Any]:
-        # Preferences are freeform JSON; keep as-is.
+        # Preferences are freeform JSON, keep as is
         prefs = profile.preferences or {}
 
         return {
@@ -45,7 +45,7 @@ class HandoffPayloadBuilder:
                     "has_cats": profile.has_cats,
                     "activity_level": profile.activity_level,
                     "experience_level": profile.experience_level,
-                    # IMPORTANT: keep preferences stable & explicit
+                    # keep preferences stable & explicit
                     "preferences": prefs,
                     # if present in serializer/model
                     "home_postal_code": getattr(profile, "home_postal_code", "") or "",

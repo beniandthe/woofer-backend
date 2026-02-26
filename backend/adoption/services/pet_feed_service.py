@@ -8,7 +8,7 @@ from adoption.services.user_profile_service import UserProfileService
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 50
-MAX_CANDIDATES = 500  # MVP guardrail
+MAX_CANDIDATES = 500  # MVP
 
 
 class PetFeedService:
@@ -19,17 +19,17 @@ class PetFeedService:
         profile = UserProfileService.get_or_create_profile(user)
 
 
-        # Candidate set: stable deterministic DB fetch
+        # Candidate set: stable DB fetch
         base_qs = (
             Pet.objects
             .select_related("organization")
             .filter(status=Pet.Status.ACTIVE)
         )
 
-        #apply server-side profile filters BEFORE ranking/pagination
+        #apply server side profile filters BEFORE ranking/pagination
         base_qs = PetFeedService._apply_profile_filters(base_qs, profile)
 
-        # Exclude "already decided" pets (user-scoped)
+        # Exclude "already decided" pets (user scoped)
         if user is not None and getattr(user, "is_authenticated", False):
             
             # liked/interest
@@ -39,7 +39,7 @@ class PetFeedService:
             applied_pet_ids = Application.objects.filter(user=user).values("pet_id") 
 
             # passed/seen
-            # If PetSeen == "seen means passed", then just filter by user.
+            # If PetSeen == "seen means passed", then just filter by user
             passed_pet_ids = PetSeen.objects.filter(user=user).values("pet_id")
 
             base_qs = (
@@ -96,7 +96,7 @@ class PetFeedService:
 
         total = len(ranked)
 
-        # target boosted count within the first `total` items
+        # target boosted count within the first total items
         target_boosted = int(total * DIVERSITY_TARGET_BOOSTED_RATIO)
         target_boosted = max(1, min(target_boosted, len(boosted)))
 
@@ -105,10 +105,10 @@ class PetFeedService:
         n_i = 0
         boosted_used = 0
 
-        # Hard guarantee: at most `total` appends
+        # Hard guarantee: at most 'total' appends
         while len(mixed) < total:
             # Prefer boosted until we hit the target, BUT if normal is exhausted,
-            # we must keep consuming boosted so we terminate.
+            # we must keep consuming boosted so we terminate
             if b_i < len(boosted) and (boosted_used < target_boosted or n_i >= len(normal)):
                 mixed.append(boosted[b_i])
                 b_i += 1
@@ -120,13 +120,13 @@ class PetFeedService:
                 n_i += 1
                 continue
 
-            # If we get here, normal is exhausted; consume remaining boosted.
+            # If we get here, normal is exhausted, consume remaining boosted
             if b_i < len(boosted):
                 mixed.append(boosted[b_i])
                 b_i += 1
                 continue
 
-            # Nothing left (defensive)
+            # Nothing left 
             break
 
         return mixed
@@ -154,18 +154,18 @@ class PetFeedService:
 
             if md is not None:
                 if md <= 10:
-                    # Very local: exact ZIP
+                    # Very local exact ZIP
                     qs = qs.filter(organization__postal_code=home_zip)
                 elif md <= 50:
-                    # Regional: ZIP prefix (first 3)
+                    # Regional ZIP prefix 
                     prefix = home_zip[:3]
                     if prefix:
                         qs = qs.filter(organization__postal_code__startswith=prefix)
                 else:
-                    # >50: MVP does not apply zip filtering (no geocoding yet)
+                    # >100: MVP does not apply zip filtering (no geocoding yet)
                     pass
 
-        # Lean MVP hard constraints:
+        # Lean MVP hard constraints
         # treat each hard constraint as "required temperament tag"
         hard_constraints = prefs.get("hard_constraints") or []
         for c in hard_constraints:
@@ -185,7 +185,7 @@ class PetFeedService:
         if lim <= 0:
             return []
 
-        # Pre-scan counts (to decide if we can enforce normal presence)
+        # Pre-scan counts to decide if we can enforce normal presence
         boosted_total = 0
         normal_total = 0
         for rp in ranked:
@@ -211,7 +211,7 @@ class PetFeedService:
         boosted_used = 0
         normal_used = 0
 
-        # First pass: fill respecting max_boosted
+        # First pass fill respecting max_boosted
         for rp in ranked:
             if len(selected) >= lim:
                 break
@@ -227,8 +227,8 @@ class PetFeedService:
                 normal_used += 1
                 selected.append(rp)
 
-        # If we didn't fill the page (because we skipped too many boosted),
-        # fill remaining slots with whatever is next in ranked order.
+        # If we didn't fill the page because we skipped too many boosted,
+        # fill remaining slots with whatever is next in ranked order
         if len(selected) < lim:
             chosen_ids = {str(rp.pet.pet_id) for rp in selected}
             for rp in ranked:

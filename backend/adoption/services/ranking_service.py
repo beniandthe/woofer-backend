@@ -14,17 +14,17 @@ BOOST_PROFILE_ACTIVITY_MATCH = 0.10
 BOOST_PROFILE_HOME_MATCH = 0.08
 BOOST_PROFILE_EXPERIENCE_MATCH = 0.07
 
-# NEW: cap total boost influence so boosted pets don't permanently dominate
+# cap total boost influence so boosted pets don't permanently dominate
 MAX_TOTAL_BOOST = 0.40
 
-# Feed diversity (deterministic) � used by PetFeedService later
-DIVERSITY_TARGET_BOOSTED_RATIO = 0.40  # 40% boosted items per page (when available)
+# Feed diversity (deterministic) used by PetFeedService 
+DIVERSITY_TARGET_BOOSTED_RATIO = 0.40  
 DIVERSITY_RATIO_MIN = 0.20
 DIVERSITY_RATIO_MAX = 0.60
 
 # Diversity targets (tunable, deterministic)
-DIVERSITY_TARGET_BOOSTED_RATIO = 0.60  # existing
-DIVERSITY_MIN_NORMAL_PER_PAGE = 1      # if normal pets exist
+DIVERSITY_TARGET_BOOSTED_RATIO = 0.60  
+DIVERSITY_MIN_NORMAL_PER_PAGE = 1      
 
 
 @dataclass(frozen=True)
@@ -46,7 +46,7 @@ class RankingService:
             return 0.0
         if listed_at.tzinfo is None:
             listed_at = listed_at.replace(tzinfo=timezone.utc)
-        # Normalize to "days since epoch" so weights are comparable-ish.
+        # Normalize to "days since epoch" so weights are comparable
         return listed_at.timestamp() / 86400.0
 
     @staticmethod
@@ -68,13 +68,13 @@ class RankingService:
                 boost += BOOST_PROFILE_ACTIVITY_MATCH
                 reasons.append("PROFILE_ACTIVITY_MATCH")
 
-        # Home matching: apartments often do better with smaller/medium (soft hint)
+        # Home matching - apartments often do better with smaller/medium 
         if profile.home_type == AdopterProfile.HomeType.APARTMENT:
             if pet.size in ("S", "M"):
                 boost += BOOST_PROFILE_HOME_MATCH
                 reasons.append("PROFILE_HOME_MATCH")
 
-        # New adopters: soft boost for gentle/easy language if present
+        # New adopters - soft boost for gentle/easy language if present
         if profile.experience_level == AdopterProfile.ExperienceLevel.NEW:
             if "gentle" in lowered or "easy" in lowered:
                 boost += BOOST_PROFILE_EXPERIENCE_MATCH
@@ -134,7 +134,7 @@ class RankingService:
             score, reasons = RankingService.score_pet(p, profile=profile)
             ranked.append(RankedPet(pet=p, score=score, reasons=reasons))
 
-        # Deterministic ordering: score DESC, then pet_id DESC
+        # Deterministic ordering score DESC, then pet_id DESC
         ranked.sort(key=lambda rp: (rp.score, str(rp.pet.pet_id)), reverse=True)
         return ranked
 
