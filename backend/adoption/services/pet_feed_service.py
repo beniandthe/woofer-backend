@@ -156,12 +156,13 @@ class PetFeedService:
                 if md <= 10:
                     # Very local exact ZIP
                     qs = qs.filter(organization__postal_code=home_zip)
-                elif md <= 50:
+                elif md <= 100:
                     # Regional ZIP prefix 
                     prefix = home_zip[:3]
                     if prefix:
                         qs = qs.filter(organization__postal_code__startswith=prefix)
                 else:
+                    # >100: MVP does not apply zip filtering (no geocoding yet)
                     pass
 
         # Lean MVP hard constraints

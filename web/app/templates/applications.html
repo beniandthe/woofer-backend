@@ -5,53 +5,56 @@
     <title>Woofer - My Applications</title>
 </head>
 <body>
-    <p><a href="/">← Home</a></p>
+    <p>
+        <a href="/">← Home</a> |
+        <a href="/interests/">Saved</a> |
+        <a href="/profile/">Profile</a>
+    </p>
+        <h1>My Applications</h1>
 
-    <h1>My Applications</h1>
+        {% if items %}
+        <ul>
+            {% for app in items %}
+            <li style="margin-bottom: 16px;">
+                <div>
+                    <strong>
+                        {{ app.pet_name|default:app.pet_id }}
+                    </strong>
+                </div>
 
-    {% if items %}
-    <ul>
-        {% for app in items %}
-        <li style="margin-bottom: 16px;">
-            <div>
-                <strong>
-                    {{ app.pet_name|default:app.pet_id }}
-                </strong>
-            </div>
+                <div style="margin-top: 4px;">
+                    <span>
+                        {{ app.organization_name|default:app.organization_id }}
+                        {% if app.organization_location %}
+                        ({{ app.organization_location }})
+                        {% endif %}
+                    </span>
+                </div>
 
-            <div style="margin-top: 4px;">
-                <span>
-                    {{ app.organization_name|default:app.organization_id }}
-                    {% if app.organization_location %}
-                    ({{ app.organization_location }})
-                    {% endif %}
-                </span>
-            </div>
+                <div style="margin-top: 6px;">
+                    <div>Status: <strong>{{ app.email_status }}</strong></div>
+                    <div>Submitted: {{ app.created_at }}</div>
+                </div>
 
-            <div style="margin-top: 6px;">
-                <div>Status: <strong>{{ app.email_status }}</strong></div>
-                <div>Submitted: {{ app.created_at }}</div>
-            </div>
+                {% if app.apply_hint %}
+                <div style="margin-top: 6px;">
+                    <strong>Next:</strong> {{ app.apply_hint }}
+                </div>
+                {% endif %}
 
-            {% if app.apply_hint %}
-            <div style="margin-top: 6px;">
-                <strong>Next:</strong> {{ app.apply_hint }}
-            </div>
-            {% endif %}
-
-            {% if app.apply_url %}
-            <div style="margin-top: 8px;">
-                <a href="{{ app.apply_url }}" target="_blank" rel="noopener">
-                    Continue on organization site
-                </a>
-            </div>
-            {% endif %}
-        </li>
-        <hr />
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>You have not submitted any applications yet.</p>
+                {% if app.apply_url %}
+                <div style="margin-top: 8px;">
+                    <a href="{{ app.apply_url }}" target="_blank" rel="noopener">
+                        Continue on organization site
+                    </a>
+                </div>
+                {% endif %}
+            </li>
+            <hr />
+            {% endfor %}
+        </ul>
+        {% else %}
+<p>You have not submitted any applications yet.</p>
     {% endif %}
 </body>
 </html>
