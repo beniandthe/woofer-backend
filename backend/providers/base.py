@@ -34,8 +34,8 @@ class ProviderPet:
     external_org_id: Optional[str]
     name: str
 
-    # Canon-aligned "intent" fields (best-effort; may be None)
-    species: Optional[str] = None         # expected: "DOG" / "CAT" etc (mapper can normalize)
+    # "intent" fields (best-effort - may be None)
+    species: Optional[str] = None         # expected "DOG" / "CAT" etc (mapper can normalize)
     age_group: Optional[str] = None       # "PUPPY" / "ADULT" / "SENIOR"
     size: Optional[str] = None            # "S" / "M" / "L" / "XL"
     sex: Optional[str] = None
@@ -46,8 +46,8 @@ class ProviderPet:
 
     photos: list[str] = field(default_factory=list)
     raw_description: Optional[str] = None
-    listed_at_iso: Optional[str] = None   # keep as ISO string at boundary; mapper parses if desired
-    status: Optional[str] = None          # "ACTIVE"/"INACTIVE" or provider status; mapper normalizes
+    listed_at_iso: Optional[str] = None   # keep as ISO string at boundary - mapper parses if desired
+    status: Optional[str] = None          # "ACTIVE"/"INACTIVE" or provider status - mapper normalizes
 
     apply_url: Optional[str] = None
     apply_hint: Optional[str] = None

@@ -27,7 +27,7 @@ class MeEndpointTests(TestCase):
 
         payload = json.loads(resp.content.decode("utf-8"))
 
-        # Envelope (wire contract)
+        # Envelope 
         self.assertIn("ok", payload)
         self.assertTrue(payload["ok"])
         self.assertIn("data", payload)

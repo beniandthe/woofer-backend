@@ -103,7 +103,7 @@ def api_put(path: str, json_body: dict, token: Optional[str] = None) -> Dict[str
     except Exception:
         payload = _non_json_payload(text=resp.text)
 
-    # match GET/POST behavior: envelope-aware
+    # match GET/POST behavior envelope aware
     if resp.status_code >= 400 or (isinstance(payload, dict) and payload.get("ok") is False):
         raise WooferAPIError(resp.status_code, payload)
 

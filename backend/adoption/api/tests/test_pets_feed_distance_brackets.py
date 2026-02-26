@@ -36,7 +36,7 @@ class PetsFeedDistanceBracketTests(TestCase):
             temperament_tags=[],
         )
 
-        # Org/pet in same ZIP prefix (900xx) but different ZIP
+        # Org/pet in same ZIP prefix but different ZIP
         self.org_prefix = Organization.objects.create(
             source="TEST",
             source_org_id="org_prefix",
@@ -60,7 +60,7 @@ class PetsFeedDistanceBracketTests(TestCase):
             temperament_tags=[],
         )
 
-        # Org/pet outside prefix (902xx)
+        # Org/pet outside prefix 
         self.org_far = Organization.objects.create(
             source="TEST",
             source_org_id="org_far",

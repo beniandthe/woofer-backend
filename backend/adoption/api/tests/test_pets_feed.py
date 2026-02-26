@@ -92,7 +92,7 @@ class PetsFeedTests(TestCase):
         items = payload["data"]["items"]
         ids = [i["pet_id"] for i in items]
 
-        # Sprint 11.6 behavior: liked pets do not appear in feed
+        # liked pets do not appear in feed
         self.assertNotIn(str(self.pet.pet_id), ids)
 
 
@@ -114,7 +114,7 @@ class PetsFeedTests(TestCase):
             temperament_tags=[],
         )
 
-        # Slightly older pet, but long-stay boost should push it above
+        # Slightly older pet but long-stay boost should push it above
         p_old = Pet.objects.create(
             source="TEST",
             external_id="old",

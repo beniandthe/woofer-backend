@@ -2,7 +2,7 @@ import os
 from django.shortcuts import render, redirect
 from .api_client import api_get, WooferAPIError, api_post, api_put
 
-# Create your views here.
+
 
 def home(request):
     """
@@ -42,7 +42,7 @@ def home(request):
 
         return render(request, "home.html", {"api_result": api_result, "liked_ids": liked_ids, "why_shown_copy": WHY_SHOWN_COPY})
     except WooferAPIError as e:
-        # Canon: display API errors verbatim
+        # display API errors verbatim
         return render(request, "error.html", {"status_code": e.status_code, "payload": e.payload}, status=502)
 
 def _find_pet_in_feed(pet_id: str):
@@ -82,7 +82,7 @@ def apply_pet(request, pet_id):
     - If apply_url exists, show continue link
     """
     if request.method != "POST":
-        # Lean MVP: Apply is a POST-only action
+        # MVP: Apply is a POST only action
         return redirect("/")
 
     try:
@@ -111,7 +111,7 @@ def apply_pet(request, pet_id):
             status=502,
         )
 
-    # 2) Fallback: find in feed
+    # 2) Fallback, find in feed
     if pet is None:
         try:
             pet = _find_pet_in_feed(pet_id_str)
@@ -157,7 +157,7 @@ def profile(request):
                 try:
                     preferences["max_distance_miles"] = int(max_distance_raw)
                 except ValueError:
-                    # Lean MVP: ignore invalid input
+                    # MVP: ignore invalid input
                     preferences = {}
 
             payload = {

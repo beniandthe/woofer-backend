@@ -67,7 +67,7 @@ class RescueGroupsClient(ProviderClient):
 
         # GET /public/orgs/?limit=&page=
         while remaining > 0:
-            chunk = min(250, remaining)  # docs: most endpoints max 250
+            chunk = min(250, remaining)  # docs - most endpoints max 250
             payload = self._get("/public/orgs/", params={"limit": chunk, "page": page})
             orgs = self._parse_orgs(payload)
 
@@ -94,9 +94,9 @@ class RescueGroupsClient(ProviderClient):
         page = 1
         remaining = limit
 
-        # Endpoint pattern appears in docs as:
+        # Endpoint pattern appears in docs as
         # /public/animals/search/available/dogs/?limit=10&page=2...
-        # We also request include=pictures to get URLs and keep mapping simple.
+        # also request include=pictures to get URLs and keep mapping simple
         base_path = "/public/animals/search/available/dogs/"
         if org_id:
             base_path = f"/public/orgs/{org_id}/animals/search/available/dogs/"
@@ -129,7 +129,7 @@ class RescueGroupsClient(ProviderClient):
                 return
             page += 1
 
-    # ---------- parsers ----------
+    # parsers 
 
     def _parse_orgs(self, payload: Dict[str, Any]) -> List[ProviderOrg]:
         data = payload.get("data")
@@ -166,7 +166,7 @@ class RescueGroupsClient(ProviderClient):
             return []
 
         included = payload.get("included") or []
-        # Build picture lookup: (animal_id -> [picture_urls])
+        # Build picture lookup - animal_id to [picture_urls]
         pic_urls_by_animal: Dict[str, List[str]] = {}
         if isinstance(included, list):
             for inc in included:
@@ -175,10 +175,10 @@ class RescueGroupsClient(ProviderClient):
                 if inc.get("type") != "pictures":
                     continue
                 attrs = inc.get("attributes") or {}
-                # pictures relate back via relationships? not always present; fallback to urls only if can’t link
-                # We'll link when the animal object includes pictures relationship; else ignore.
-                # We'll just keep URLs available by picture id; the animal parser will assemble via relationship.
-                # (Handled below)
+        
+                # link when the animal object includes pictures relationship, else ignore
+                # keep URLs available by picture id, the animal parser will assemble via relationship.
+                # Handled below
                 pass
 
         out: List[ProviderPet] = []
@@ -216,7 +216,7 @@ class RescueGroupsClient(ProviderClient):
                 elif isinstance(org_data, dict) and org_data.get("id"):
                     external_org_id = str(org_data["id"])
 
-            # Pictures: prefer pictureThumbnailUrl; otherwise include pictures relationship if present
+            # Pictures - prefer pictureThumbnailUrl, otherwise include pictures relationship if present
             photos: List[str] = []
             thumb = attrs.get("pictureThumbnailUrl")
             if thumb:
@@ -248,7 +248,7 @@ class RescueGroupsClient(ProviderClient):
 
 
 def _map_age_group(v: Any) -> Optional[str]:
-    # RescueGroups ageGroup: Baby, Young Adult, Senior :contentReference[oaicite:5]{index=5}
+    # RescueGroups ageGroup Baby, Young Adult, Senior :contentReference[oaicite:5]{index=5}
     if not v:
         return None
     s = str(v).strip().lower()
@@ -262,7 +262,7 @@ def _map_age_group(v: Any) -> Optional[str]:
 
 
 def _map_size(v: Any) -> Optional[str]:
-    # RescueGroups sizeGroup: Small, Medium, Large, X-Large :contentReference[oaicite:6]{index=6}
+    # RescueGroups sizeGroup Small, Medium, Large, X-Large :contentReference[oaicite:6]{index=6}
     if not v:
         return None
     s = str(v).strip().lower()

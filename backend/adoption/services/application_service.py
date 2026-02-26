@@ -15,12 +15,12 @@ class ApplicationService:
         except Pet.DoesNotExist:
             raise NotFound("Pet not found")
 
-        # Optional safety check (keeps your mismatch test valid)
+        # Optional safety check keeps mismatch test valid
         if organization_id is not None:
             if str(pet.organization.organization_id) != str(organization_id):
                 raise ValidationError({"organization_id": ["does not match pet.organization"]})
 
-        # Profile snapshot at apply-time
+        # Profile snapshot at apply time
         profile = UserProfileService.get_or_create_profile(user)
         profile_snapshot = {
             "home_type": profile.home_type,
@@ -40,7 +40,7 @@ class ApplicationService:
             user=user,
         )
 
-        # Create (idempotent) inside transaction
+        # Create idempotent inside transaction
         try:
             with transaction.atomic():
                 app = Application.objects.create(
@@ -54,7 +54,7 @@ class ApplicationService:
         except IntegrityError:
             app = Application.objects.get(user=user, pet=pet)
 
-        # IMPORTANT: notify AFTER transaction so side-effects aren't tied to rollback
+        # notify AFTER transaction so side effects aren't tied to rollback
         NotificationService.notify_application_created(app)
         return app
 

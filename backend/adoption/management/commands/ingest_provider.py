@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
 
         try:
-            provider: ProviderName = provider_raw  # type: ignore
+            provider: ProviderName = provider_raw  
         except Exception:
             raise CommandError(f"Invalid provider value: {provider_raw}")
 
@@ -180,7 +180,7 @@ class Command(BaseCommand):
             result = IngestionService.ingest_canonical(org_dicts, pet_dicts)
             now = timezone.now()
 
-            # Mark seen pets' last_seen_at (provider-scoped)
+            # Mark seen pets last_seen_at (provider)
             Pet.objects.filter(
                 source=provider.upper(),
                 external_id__in=result.pets_seen_external_ids,

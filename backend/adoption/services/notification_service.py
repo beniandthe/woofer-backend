@@ -9,7 +9,7 @@ class NotificationService:
     """
     v0 stub.
     For MVP: "send" means log a payload and mark notification_status.
-    Must never raise to caller; failures should be recorded.
+    Must never raise to caller, failures should be recorded.
     """
 
     @staticmethod

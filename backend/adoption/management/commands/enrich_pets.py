@@ -20,7 +20,7 @@ class Command(BaseCommand):
             .filter(Q(ai_description__isnull=True) | Q(ai_description=""))
             .exclude(raw_description__isnull=True)
             .exclude(raw_description__exact="")
-            # deterministic order; pick one and keep it stable
+            # deterministic order - pick one and keep it stable
             .order_by("-listed_at", "-pet_id")[:limit]
         )
 

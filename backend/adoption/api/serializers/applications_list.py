@@ -36,7 +36,7 @@ class ApplicationsListItemSerializer(serializers.ModelSerializer):
     def get_pet(self, obj):
         pet = obj.pet
         org = obj.organization
-        # mini-card only (demo-grade, canon-safe)
+        # mini-card only (demo-grade)
         return {
             "pet_id": str(pet.pet_id),
             "name": pet.name,
@@ -53,7 +53,7 @@ class ApplicationsListItemSerializer(serializers.ModelSerializer):
         }
 
     def get_handoff(self, obj):
-        # Whitelist only the parts we want to expose in list views.
+        # Whitelist only the parts to expose in list views
         hp = obj.handoff_payload or {}
 
         disclaimer = hp.get("disclaimer") or {}

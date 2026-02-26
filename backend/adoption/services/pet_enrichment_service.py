@@ -1,7 +1,7 @@
 import re
 from typing import Optional, Iterable
 
-# Keep it deterministic: no randomness, no external calls.
+# Keep it deterministic, no randomness, no external calls.
 
 DEFAULT_FUN_TAGLINES = [
     "Ready to meet a new sidekick.",
@@ -9,7 +9,7 @@ DEFAULT_FUN_TAGLINES = [
     "Here for good vibes and belly rubs (if offered).",
 ]
 
-# Stable choice based on content hash-ish without randomness
+# Stable choice based on content hash without randomness
 def _stable_tagline(seed: str) -> str:
     if not seed:
         return DEFAULT_FUN_TAGLINES[0]
@@ -38,14 +38,14 @@ class PetEnrichmentService:
         if not text:
             return None
 
-        # 1) Normalize whitespace / strip boilerplate-y formatting
+        # 1) Normalize whitespace / strip boilerplate formatting
         text = re.sub(r"\s+", " ", text)
         text = re.sub(r"(?:\*+|_+|~+)", "", text).strip()
 
         # 2) Pull simple “facts” only if clearly present
         lowered = text.lower()
 
-        # Temperament-ish keywords (only if present)
+        # Temperament keywords (only if present)
         traits = []
         for kw, label in [
             ("gentle", "gentle"),
@@ -65,7 +65,7 @@ class PetEnrichmentService:
             if kw in lowered and label not in traits:
                 traits.append(label)
 
-        # Compatibility hints (only if explicitly mentioned)
+        # Compatibility hints only if explicitly mentioned
         compat = []
         if "kids" in lowered or "children" in lowered:
             if "good with" in lowered or "great with" in lowered:
@@ -76,7 +76,7 @@ class PetEnrichmentService:
             compat.append("may do well with cats")
 
         # 3) Build a 1–2 sentence summary that stays neutral
-        # Sentence 1: warm neutral opening with 1–3 traits if present
+        # Sentence 1 - warm neutral opening with 1–3 traits if present
         if traits:
             top = traits[:3]
             trait_phrase = ", ".join(top[:-1]) + (f", and {top[-1]}" if len(top) > 1 else top[0])
@@ -84,7 +84,7 @@ class PetEnrichmentService:
         else:
             s1 = "A pup with their own vibe."
 
-        # Sentence 2: add compatibility if present; otherwise add deterministic tagline
+        # Sentence 2 add compatibility if present otherwise add deterministic tagline
         if compat:
             # keep short
             c = compat[0] if len(compat) == 1 else compat[0]
@@ -94,7 +94,7 @@ class PetEnrichmentService:
 
         out = f"{s1} {s2}".strip()
 
-        # 4) Hard cap length (deterministic)
+        # 4) Hard cap length 
         if len(out) > PetEnrichmentService.MAX_LEN:
             out = out[: PetEnrichmentService.MAX_LEN - 3].rstrip() + "..."
 
@@ -124,6 +124,6 @@ class PetEnrichmentService:
                 pet.save(update_fields=["ai_description"])
                 updated += 1
             except Exception:
-                # swallow; ingestion must never fail because enrichment failed
+                # swallow ingestion must never fail because enrichment failed
                 continue
         return updated

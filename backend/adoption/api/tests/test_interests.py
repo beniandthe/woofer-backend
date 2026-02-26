@@ -52,7 +52,7 @@ class InterestsTests(TestCase):
         self.assertTrue(p2["data"]["already_existed"])
 
 
-        # Idempotent: same interest returned
+        # Idempotent - same interest returned
         self.assertEqual(interest_id_1, interest_id_2)
 
     def test_list_interests_returns_items(self):

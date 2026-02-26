@@ -52,7 +52,7 @@ class ApplyUrlApiTests(TestCase):
         self.assertGreaterEqual(len(items), 1)
 
         first = items[0]
-        # If ranking changes order, locate our pet by id
+        # If ranking changes order, locate pet by id
         match = None
         for it in items:
             if it["pet_id"] == str(self.pet.pet_id):
@@ -64,7 +64,6 @@ class ApplyUrlApiTests(TestCase):
         self.assertEqual(match["apply_hint"], "Apply on org site")
 
     def test_detail_includes_apply_fields_if_present(self):
-        # Skip if your project doesn't have the detail endpoint wired yet
         resp = self.client.get(f"/api/v1/pets/{self.pet.pet_id}")
         if resp.status_code == 404:
             return

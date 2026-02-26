@@ -25,6 +25,6 @@ class IngestionOrgPostalCodeTests(TestCase):
         self.assertEqual(org2.organization_id, org.organization_id)
         self.assertEqual(org2.postal_code, "90210")
 
-        # sanity: db reflects it
+        # sanity, db reflects it
         db_org = Organization.objects.get(source="RESCUEGROUPS", source_org_id="123")
         self.assertEqual(db_org.postal_code, "90210")

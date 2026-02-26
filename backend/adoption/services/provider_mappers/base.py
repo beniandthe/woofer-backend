@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Callable, Tuple
 from providers.base import ProviderOrg, ProviderPet, ProviderName
 
 
-# ---------- helpers ----------
+# helpers 
 
 def _str(x: Any) -> Optional[str]:
     if x is None:
@@ -30,7 +30,7 @@ def _location(city: Optional[str], state: Optional[str]) -> str:
 
 
 def _normalize_species(species: Optional[str]) -> str:
-    # Canon MVP is DOG; future supports CAT.
+    # Canon MVP is DOG future supports CAT
     s = (_str(species) or "DOG").upper()
     if s in ("DOG", "CAT"):
         return s
@@ -39,17 +39,17 @@ def _normalize_species(species: Optional[str]) -> str:
 
 
 def _normalize_status(status: Optional[str]) -> str:
-    # Canon: ACTIVE / INACTIVE
+    # Canon ACTIVE / INACTIVE
     s = (_str(status) or "").lower()
     if s in ("active", "adoptable", "available"):
         return "ACTIVE"
     if s in ("inactive", "unavailable", "adopted", "pending"):
         return "INACTIVE"
-    # Conservative default: keep pets visible unless clearly not adoptable
+    # Conservative default keep pets visible unless clearly not adoptable
     return "ACTIVE"
 
 
-# ---------- canonical dict builders ----------
+# canonical dict builders 
 
 def canonical_org_dict(org: ProviderOrg) -> Dict[str, Any]:
     """
@@ -97,7 +97,7 @@ def canonical_pet_dict(pet: ProviderPet) -> Dict[str, Any]:
   
 
 
-# ---------- registry (for ingest_provider later) ----------
+# registry (for ingest_provider later) 
 
 OrgMapper = Callable[[ProviderOrg], Dict[str, Any]]
 PetMapper = Callable[[ProviderPet], Dict[str, Any]]

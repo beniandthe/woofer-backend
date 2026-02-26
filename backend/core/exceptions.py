@@ -19,7 +19,7 @@ def canonical_exception_handler(exc, context):
     timestamp = getattr(request, "request_timestamp", None)
 
     if response is None:
-        # Non-DRF exception
+        # Non DRF exception
         return None
 
     code = "API_ERROR"
