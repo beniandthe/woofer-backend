@@ -3,16 +3,24 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
+from unittest.mock import patch
 
 from adoption.models import Organization, Pet, AdopterProfile
 
 User = get_user_model()
 
+
 class PetsFeedDistanceBracketTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="u", password="pass1234")
 
-        # Org/pet in exact ZIP
+        # Home ZIP we geolookup in tests
+        self.home_zip = "90012"
+        # Downtown LA-ish centroid
+        self.home_lat = 34.0537
+        self.home_lon = -118.2428
+
+        # Org/pet near home (downtown LA)
         self.org_exact = Organization.objects.create(
             source="TEST",
             source_org_id="org_exact",
@@ -21,6 +29,10 @@ class PetsFeedDistanceBracketTests(TestCase):
             location="LA",
             is_active=True,
             postal_code="90012",
+            latitude=self.home_lat,
+            longitude=self.home_lon,
+            geo_source="TEST",
+            geo_updated_at=timezone.now(),
         )
         self.pet_exact = Pet.objects.create(
             source="TEST",
@@ -36,7 +48,7 @@ class PetsFeedDistanceBracketTests(TestCase):
             temperament_tags=[],
         )
 
-        # Org/pet in same ZIP prefix but different ZIP
+        # Org/pet within ~10-50 miles (LAX-ish)
         self.org_prefix = Organization.objects.create(
             source="TEST",
             source_org_id="org_prefix",
@@ -45,6 +57,10 @@ class PetsFeedDistanceBracketTests(TestCase):
             location="LA",
             is_active=True,
             postal_code="90045",
+            latitude=33.9416,
+            longitude=-118.4085,
+            geo_source="TEST",
+            geo_updated_at=timezone.now(),
         )
         self.pet_prefix = Pet.objects.create(
             source="TEST",
@@ -60,15 +76,19 @@ class PetsFeedDistanceBracketTests(TestCase):
             temperament_tags=[],
         )
 
-        # Org/pet outside prefix 
+        # Truly far org/pet (Baltimore-ish) so radius filtering behaves deterministically
         self.org_far = Organization.objects.create(
             source="TEST",
             source_org_id="org_far",
             name="Org Far",
             contact_email="c@example.com",
-            location="LA",
+            location="MD",
             is_active=True,
-            postal_code="90210",
+            postal_code="21201",
+            latitude=39.2904,
+            longitude=-76.6122,
+            geo_source="TEST",
+            geo_updated_at=timezone.now(),
         )
         self.pet_far = Pet.objects.create(
             source="TEST",
@@ -94,9 +114,13 @@ class PetsFeedDistanceBracketTests(TestCase):
         self.assertTrue(payload["ok"])
         return [i["pet_id"] for i in payload["data"]["items"]]
 
-    def test_distance_le_10_exact_zip(self):
+    @patch("adoption.services.pet_feed_service.ZipGeoService.lookup")
+    def test_distance_le_10_exact_zip(self, mock_lookup):
+        # Ensure the distance filter activates
+        mock_lookup.return_value = {"lat": self.home_lat, "lon": self.home_lon}
+
         profile, _ = AdopterProfile.objects.get_or_create(user=self.user)
-        profile.home_postal_code = "90012"
+        profile.home_postal_code = self.home_zip
         profile.preferences = {"max_distance_miles": 10}
         profile.save()
 
@@ -105,9 +129,12 @@ class PetsFeedDistanceBracketTests(TestCase):
         self.assertNotIn(str(self.pet_prefix.pet_id), ids)
         self.assertNotIn(str(self.pet_far.pet_id), ids)
 
-    def test_distance_11_to_50_zip_prefix(self):
+    @patch("adoption.services.pet_feed_service.ZipGeoService.lookup")
+    def test_distance_11_to_50_zip_prefix(self, mock_lookup):
+        mock_lookup.return_value = {"lat": self.home_lat, "lon": self.home_lon}
+
         profile, _ = AdopterProfile.objects.get_or_create(user=self.user)
-        profile.home_postal_code = "90012"
+        profile.home_postal_code = self.home_zip
         profile.preferences = {"max_distance_miles": 50}
         profile.save()
 
@@ -116,13 +143,16 @@ class PetsFeedDistanceBracketTests(TestCase):
         self.assertIn(str(self.pet_prefix.pet_id), ids)
         self.assertNotIn(str(self.pet_far.pet_id), ids)
 
-    def test_distance_gt_50_no_zip_filter(self):
+    @patch("adoption.services.pet_feed_service.ZipGeoService.lookup")
+    def test_distance_gt_50_still_filters_by_radius(self, mock_lookup):
+        mock_lookup.return_value = {"lat": self.home_lat, "lon": self.home_lon}
+
         profile, _ = AdopterProfile.objects.get_or_create(user=self.user)
-        profile.home_postal_code = "90012"
+        profile.home_postal_code = self.home_zip
         profile.preferences = {"max_distance_miles": 51}
         profile.save()
 
         ids = self._get_ids()
         self.assertIn(str(self.pet_exact.pet_id), ids)
         self.assertIn(str(self.pet_prefix.pet_id), ids)
-        self.assertIn(str(self.pet_far.pet_id), ids)
+        self.assertNotIn(str(self.pet_far.pet_id), ids)

@@ -1,10 +1,12 @@
 from typing import Optional, Tuple, List
 import math
+from decimal import Decimal
 from adoption.models import Pet, AdopterProfile, Interest, PetSeen, Application
 from adoption.services.ranking_service import RankingService, DIVERSITY_TARGET_BOOSTED_RATIO, DIVERSITY_MIN_NORMAL_PER_PAGE
 from adoption.services.ranked_cursor import decode_rank_cursor, encode_rank_cursor
 from django.db.models import Subquery
 from adoption.services.user_profile_service import UserProfileService
+from adoption.services.zip_geo_service import ZipGeoService
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 50
@@ -18,28 +20,18 @@ class PetFeedService:
         lim = min(max(lim, 1), MAX_LIMIT)
         profile = UserProfileService.get_or_create_profile(user)
 
-
-        # Candidate set: stable DB fetch
         base_qs = (
             Pet.objects
             .select_related("organization")
             .filter(status=Pet.Status.ACTIVE)
         )
 
-        #apply server side profile filters BEFORE ranking/pagination
-        base_qs = PetFeedService._apply_profile_filters(base_qs, profile)
+        # APPLY PROFILE FILTERS (now returns distance_ctx too)
+        base_qs, distance_ctx = PetFeedService._apply_profile_filters(base_qs, profile)
 
-        # Exclude "already decided" pets (user scoped)
         if user is not None and getattr(user, "is_authenticated", False):
-            
-            # liked/interest
             liked_pet_ids = Interest.objects.filter(user=user).values("pet_id")
-
-            # applied
-            applied_pet_ids = Application.objects.filter(user=user).values("pet_id") 
-
-            # passed/seen
-            # If PetSeen == "seen means passed", then just filter by user
+            applied_pet_ids = Application.objects.filter(user=user).values("pet_id")
             passed_pet_ids = PetSeen.objects.filter(user=user).values("pet_id")
 
             base_qs = (
@@ -54,6 +46,19 @@ class PetFeedService:
             .order_by("-listed_at", "-pet_id")[:MAX_CANDIDATES]
         )
 
+        # PRECISE DISTANCE FILTER (after DB bounding box)
+        if distance_ctx is not None:
+            center_lat, center_lon = distance_ctx["center"]
+            max_miles = distance_ctx["miles"]
+            candidates = [
+                p for p in candidates
+                if PetFeedService._within_radius_miles(
+                    center_lat, center_lon,
+                    p.organization.latitude, p.organization.longitude,
+                    max_miles,
+                )
+            ]
+
         ranked = RankingService.rank(candidates, profile=profile)
         ranked = PetFeedService._apply_diversity_slotting(ranked)
 
@@ -66,7 +71,6 @@ class PetFeedService:
 
         page = PetFeedService._select_page_with_diversity(ranked, lim)
         pets = [rp.pet for rp in page]
-
 
         if len(page) < lim:
             return pets, None
@@ -133,6 +137,10 @@ class PetFeedService:
 
     @staticmethod
     def _apply_profile_filters(qs, profile: AdopterProfile):
+        """
+        Returns: (qs, distance_ctx)
+        distance_ctx is either None or {"center": (lat, lon), "miles": md}
+        """
         prefs = profile.preferences or {}
 
         preferred_sizes = prefs.get("preferred_sizes") or []
@@ -143,36 +151,63 @@ class PetFeedService:
         if preferred_age_groups:
             qs = qs.filter(age_group__in=preferred_age_groups)
 
-        home_zip = (profile.home_postal_code or "").strip()
+        distance_ctx = None
+
+        home_zip_raw = (profile.home_postal_code or "").strip()
+        home_zip = ZipGeoService.normalize_zip(home_zip_raw)
         max_distance = (profile.preferences or {}).get("max_distance_miles")
 
-        if home_zip and max_distance:
+        if home_zip and max_distance is not None:
             try:
                 md = int(max_distance)
             except (TypeError, ValueError):
                 md = None
 
             if md is not None:
+                # Keep bracket behavior for <= 50 (canon)
                 if md <= 10:
-                    # Very local exact ZIP
                     qs = qs.filter(organization__postal_code=home_zip)
+
                 elif md <= 50:
-                    # Regional ZIP prefix 
                     prefix = home_zip[:3]
                     if prefix:
                         qs = qs.filter(organization__postal_code__startswith=prefix)
-                else:
-                    # >100: MVP does not apply zip filtering (no geocoding yet)
-                    pass
 
-        # Lean MVP hard constraints
-        # treat each hard constraint as "required temperament tag"
+                else:
+                    # md > 50: enable geo radius filtering (12.5.2)
+                    # Use offline lookup (tests patch ZipGeoService.lookup)
+                    home_geo = ZipGeoService.lookup(home_zip)
+                    center = PetFeedService._extract_lat_lon(home_geo)
+                    if center is not None:
+                        center_lat, center_lon = center
+                        distance_ctx = {"center": (center_lat, center_lon), "miles": md}
+
+                        # DB pre-filter: bounding box + require org coords (deterministic)
+                        lat_delta, lon_delta = PetFeedService._bbox_deltas_miles(center_lat, md)
+
+                        lat_min = Decimal(str(center_lat - lat_delta))
+                        lat_max = Decimal(str(center_lat + lat_delta))
+                        lon_min = Decimal(str(center_lon - lon_delta))
+                        lon_max = Decimal(str(center_lon + lon_delta))
+
+                        qs = qs.filter(
+                            organization__latitude__isnull=False,
+                            organization__longitude__isnull=False,
+                            organization__latitude__gte=lat_min,
+                            organization__latitude__lte=lat_max,
+                            organization__longitude__gte=lon_min,
+                            organization__longitude__lte=lon_max,
+                        )
+                    else:
+                        # If we can't geo-locate the home zip, degrade gracefully: no distance_ctx
+                        distance_ctx = None
+
         hard_constraints = prefs.get("hard_constraints") or []
         for c in hard_constraints:
             if isinstance(c, str) and c.strip():
                 qs = qs.filter(temperament_tags__contains=[c.strip()])
 
-        return qs
+        return qs, distance_ctx
 
     @staticmethod
     def _select_page_with_diversity(ranked, lim: int):
@@ -240,4 +275,64 @@ class PetFeedService:
 
         return selected
 
-    
+    @staticmethod
+    def _extract_lat_lon(obj):
+        """
+        ZipGeoService.lookup() may return a dict, tuple, or object.
+        Normalize to (float_lat, float_lon) or None.
+        """
+        if obj is None:
+            return None
+
+        lat = lon = None
+        if isinstance(obj, dict):
+            lat = obj.get("lat") or obj.get("latitude")
+            lon = obj.get("lon") or obj.get("longitude")
+        elif isinstance(obj, (tuple, list)) and len(obj) >= 2:
+            lat, lon = obj[0], obj[1]
+        else:
+            lat = getattr(obj, "lat", None) or getattr(obj, "latitude", None)
+            lon = getattr(obj, "lon", None) or getattr(obj, "longitude", None)
+
+        if lat is None or lon is None:
+            return None
+
+        try:
+            return float(lat), float(lon)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _bbox_deltas_miles(center_lat: float, miles: int):
+        """
+        Approx degrees per mile bounding box.
+        """
+        # 1 deg lat ~ 69 miles
+        lat_delta = float(miles) / 69.0
+        # 1 deg lon ~ 69*cos(lat) miles
+        denom = 69.0 * max(0.1, math.cos(math.radians(center_lat)))
+        lon_delta = float(miles) / denom
+        return lat_delta, lon_delta
+
+    @staticmethod
+    def _within_radius_miles(center_lat, center_lon, org_lat, org_lon, max_miles: int) -> bool:
+        if org_lat is None or org_lon is None:
+            return False
+
+        try:
+            lat2 = float(org_lat)
+            lon2 = float(org_lon)
+        except (TypeError, ValueError):
+            return False
+
+        # Haversine (miles)
+        r_miles = 3958.7613
+        dlat = math.radians(lat2 - center_lat)
+        dlon = math.radians(lon2 - center_lon)
+
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(math.radians(center_lat)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        )
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return (r_miles * c) <= float(max_miles)
