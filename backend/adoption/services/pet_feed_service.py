@@ -26,9 +26,10 @@ class PetFeedService:
             .filter(status=Pet.Status.ACTIVE)
         )
 
-        # APPLY PROFILE FILTERS (now returns distance_ctx too)
+        # APPLY PROFILE FILTERS (returns distance_ctx)
         base_qs, distance_ctx = PetFeedService._apply_profile_filters(base_qs, profile)
 
+        # Exclude "already decided" pets (user scoped)
         if user is not None and getattr(user, "is_authenticated", False):
             liked_pet_ids = Interest.objects.filter(user=user).values("pet_id")
             applied_pet_ids = Application.objects.filter(user=user).values("pet_id")
@@ -41,20 +42,23 @@ class PetFeedService:
                 .exclude(pet_id__in=Subquery(passed_pet_ids))
             )
 
+        # Candidate set: stable deterministic DB fetch
         candidates = list(
             base_qs
             .order_by("-listed_at", "-pet_id")[:MAX_CANDIDATES]
         )
 
-        # PRECISE DISTANCE FILTER (after DB bounding box)
+        # PRECISE DISTANCE FILTER (after DB filter/candidate cap)
         if distance_ctx is not None:
             center_lat, center_lon = distance_ctx["center"]
             max_miles = distance_ctx["miles"]
+
             candidates = [
                 p for p in candidates
                 if PetFeedService._within_radius_miles(
                     center_lat, center_lon,
-                    p.organization.latitude, p.organization.longitude,
+                    getattr(p.organization, "latitude", None),
+                    getattr(p.organization, "longitude", None),
                     max_miles,
                 )
             ]
@@ -140,6 +144,11 @@ class PetFeedService:
         """
         Returns: (qs, distance_ctx)
         distance_ctx is either None or {"center": (lat, lon), "miles": md}
+
+        12.5.4 rule:
+        If home_postal_code and max_distance_miles are present and valid:
+          - require org lat/lon (exclude missing)
+          - filter via haversine in python (after candidate fetch)
         """
         prefs = profile.preferences or {}
 
@@ -155,53 +164,42 @@ class PetFeedService:
 
         home_zip_raw = (profile.home_postal_code or "").strip()
         home_zip = ZipGeoService.normalize_zip(home_zip_raw)
-        max_distance = (profile.preferences or {}).get("max_distance_miles")
+        max_distance = (prefs or {}).get("max_distance_miles")
 
-        if home_zip and max_distance is not None:
+        md: Optional[int] = None
+        if max_distance is not None:
             try:
                 md = int(max_distance)
             except (TypeError, ValueError):
                 md = None
 
-            if md is not None:
-                # Keep bracket behavior for <= 50 (canon)
-                if md <= 10:
-                    qs = qs.filter(organization__postal_code=home_zip)
+        if home_zip and md is not None and md > 0:
+            # Resolve home centroid (offline)
+            home = ZipGeoService.lookup(home_zip)
+            latlon = PetFeedService._extract_lat_lon(home)
 
-                elif md <= 50:
-                    prefix = home_zip[:3]
-                    if prefix:
-                        qs = qs.filter(organization__postal_code__startswith=prefix)
+            if latlon is not None:
+                center_lat, center_lon = latlon
+                distance_ctx = {"center": (center_lat, center_lon), "miles": md}
 
-                else:
-                    # md > 50: enable geo radius filtering (12.5.2)
-                    # Use offline lookup (tests patch ZipGeoService.lookup)
-                    home_geo = ZipGeoService.lookup(home_zip)
-                    center = PetFeedService._extract_lat_lon(home_geo)
-                    if center is not None:
-                        center_lat, center_lon = center
-                        distance_ctx = {"center": (center_lat, center_lon), "miles": md}
+                # Exclude orgs that cannot be distance filtered
+                qs = qs.exclude(organization__latitude__isnull=True).exclude(organization__longitude__isnull=True)
 
-                        # DB pre-filter: bounding box + require org coords (deterministic)
-                        lat_delta, lon_delta = PetFeedService._bbox_deltas_miles(center_lat, md)
+                # Optional: DB-side bounding box to reduce candidates BEFORE Python haversine
+                lat_delta, lon_delta = PetFeedService._bbox_deltas_miles(center_lat, md)
+                lat_min = Decimal(str(center_lat - lat_delta))
+                lat_max = Decimal(str(center_lat + lat_delta))
+                lon_min = Decimal(str(center_lon - lon_delta))
+                lon_max = Decimal(str(center_lon + lon_delta))
 
-                        lat_min = Decimal(str(center_lat - lat_delta))
-                        lat_max = Decimal(str(center_lat + lat_delta))
-                        lon_min = Decimal(str(center_lon - lon_delta))
-                        lon_max = Decimal(str(center_lon + lon_delta))
+                qs = qs.filter(
+                    organization__latitude__gte=lat_min,
+                    organization__latitude__lte=lat_max,
+                    organization__longitude__gte=lon_min,
+                    organization__longitude__lte=lon_max,
+                )
 
-                        qs = qs.filter(
-                            organization__latitude__isnull=False,
-                            organization__longitude__isnull=False,
-                            organization__latitude__gte=lat_min,
-                            organization__latitude__lte=lat_max,
-                            organization__longitude__gte=lon_min,
-                            organization__longitude__lte=lon_max,
-                        )
-                    else:
-                        # If we can't geo-locate the home zip, degrade gracefully: no distance_ctx
-                        distance_ctx = None
-
+        # Lean MVP hard constraints
         hard_constraints = prefs.get("hard_constraints") or []
         for c in hard_constraints:
             if isinstance(c, str) and c.strip():
