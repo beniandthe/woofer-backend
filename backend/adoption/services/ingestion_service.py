@@ -4,6 +4,7 @@ from typing import Any, Dict, Iterable, Optional, Tuple
 from django.db import transaction
 from django.utils import timezone
 from adoption.services.pet_enrichment_service import PetEnrichmentService
+from adoption.services.zip_geo_service import ZipGeoService
 from adoption.models import Organization, Pet
 from typing import Set
 
@@ -31,13 +32,28 @@ class IngestionService:
         if not source or not source_org_id:
             raise ValueError("Organization missing required keys: source, source_org_id")
 
+        postal_raw = (org.get("postal_code", "") or "").strip()
+        postal_norm = ZipGeoService.normalize_zip(postal_raw)
+
         defaults = {
             "name": org.get("name") or (source_org_id or "Unknown Organization"),
             "contact_email": org.get("contact_email"),
             "location": org.get("location") or "Unknown",
-            "postal_code": org.get("postal_code", "") or "",
+            "postal_code": postal_norm or "",  # store normalized 5-digit ZIP when available
             "is_active": bool(org.get("is_active", True)),
         }
+
+        # Offline ZIP centroid geocode (deterministic)
+        geo = ZipGeoService.lookup(postal_norm) if postal_norm else None
+        if geo:
+            defaults.update(
+                {
+                    "latitude": geo.lat,
+                    "longitude": geo.lon,
+                    "geo_source": "ZIP",
+                    "geo_updated_at": timezone.now(),
+                }
+            )
 
         obj, created = Organization.objects.update_or_create(
             source=source,
