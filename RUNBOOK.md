@@ -69,8 +69,10 @@ _________________________________
 	
 -This will: Fetch provider data, Upsert organizations + pets, Mark missing pets INACTIVE,
 	Update last_seen_at, Backfill risk flags | Enrich missing AI descriptions
+- Geocode organizations from ZIP centroids (only when eligible; never overwrites non-ZIP geo)
 
 -Expected output: pets_created / updated, pets_deactivated, risk_backfilled, mode=WRITE
+
 
 	cd C:\Users\rossm\woofer\backend
 	.\.venv\Scripts\Activate.ps1
@@ -82,6 +84,29 @@ _________________________________
 	python manage.py ingest_provider --provider rescuegroups --limit 200 --force --lock-owner manual_override
 
 
+---------------------------------------
+#### Geocoding (Offline ZIP centroids) 
+
+Woofer now supports deterministic, offline geocoding for Organizations using ZIP centroids.
+
+- Source of truth dataset: `backend/adoption/data/us_zip_centroids.csv`
+- Lookup service: `ZipGeoService` (offline, deterministic, no network calls)
+
+When geocoding runs:
+- During ingestion/upsert, if an Organization has a valid `postal_code` and is missing lat/lon,
+  we resolve ZIP → (lat, lon) from the offline dataset and store:
+  - `latitude`, `longitude`
+  - `geo_source="ZIP"`
+  - `geo_updated_at=now()`
+
+Overwrite rules (safety):
+- We DO NOT overwrite existing non-ZIP geocoding.
+  If `geo_source` is set to something other than "" or "ZIP", ingestion will leave lat/lon unchanged.
+
+Why this matters:
+- Distance filtering in the pets feed depends on org lat/lon for accurate radius filtering.
+
+
 ------------------
 ##### Smoke checks
 -Backend: pets feed (enveloped)
@@ -89,9 +114,32 @@ _________________________________
 
 	curl.exe -H "X-Woofer-Dev-User: web_smoke_user" "http://127.0.0.1:8000/api/v1/pets?limit=5"
 
+---------------------------------
+##### Geo sanity checks (MVP)
+
+1) Confirm ZIP dataset is loaded:
+  python manage.py shell
+  >>> from adoption.services.zip_geo_service import ZipGeoService
+  >>> ZipGeoService.count_loaded()
+  >>> ZipGeoService.lookup("90066")
+
+2) Confirm orgs have coordinates:
+  python manage.py shell
+  >>> from adoption.models import Organization
+  >>> Organization.objects.filter(latitude__isnull=False, longitude__isnull=False).count()
+
+3) Backfill org geos (if needed)
+- Use this if orgs exist with postal_code but missing lat/lon.
+
+DRY RUN:
+  python manage.py backfill_org_geos --dry-run
+
+WRITE:
+  python manage.py backfill_org_geos
+
 
 ---------------------------------------
-##### Web Demo Validation (Happy Path)
+##### Web Demo Validation 
 Open:
 http://127.0.0.1:8001/
 

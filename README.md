@@ -26,6 +26,15 @@ Woofer consists of:
   - No provider schema leakage
   - Displays feed, interests, and applications
 
+# Geocoding (Offline ZIP centroids)
+Woofer uses a deterministic offline ZIP centroid dataset to support distance-based filtering:
+
+- Dataset: `backend/adoption/data/us_zip_centroids.csv`
+- Service: `ZipGeoService` (offline, no network calls)
+
+Organizations are geocoded from `postal_code` during ingestion and can be backfilled via:
+  python manage.py backfill_org_geos
+
 # Real Data Validation (RescueGroups)
 Woofer supports ingesting real adoptable pets from RescueGroups into canonical models.
 
@@ -68,8 +77,9 @@ python manage.py sync_all --provider rescuegroups --limit 200
 _________________________
 #### Canonical Guarantees
 Woofer enforces: 
-Enveloped API responses, No provider schema leakage, Deterministic ranking + diversity slotting, Idempotent interest application creation, Controlled application handoff payloads, Audit-safe provider sync state
+- Enveloped API responses, No provider schema leakage, Deterministic ranking + diversity slotting, Idempotent interest application creation, Controlled application handoff payloads, Audit-safe provider sync state
 
+- Deterministic offline geocoding (ZIP → lat/lon) with geo_source auditing and safe overwrite rules
 
 
 
