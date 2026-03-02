@@ -64,19 +64,28 @@ _________________________________
 
 #### WRITE
 2.) Sync all (WRITE) — real DB writes
-	Fetches, ingests, deactivates missing pets, backfills risk flags, 
-	then enriches missing AI descriptions.
-	
--This will: Fetch provider data, Upsert organizations + pets, Mark missing pets INACTIVE,
-	Update last_seen_at, Backfill risk flags | Enrich missing AI descriptions
-- Geocode organizations from ZIP centroids (only when eligible; never overwrites non-ZIP geo)
+Fetches, ingests, deactivates missing pets, backfills risk flags,
+**backfills organization geos (ZIP → lat/lon)**, then enriches missing AI descriptions.
+
+-This will:
+- Fetch provider data
+- Upsert organizations + pets
+- Mark missing pets INACTIVE
+- Update last_seen_at
+- Backfill risk flags
+- **Backfill org latitude/longitude from postal_code (geo_source="ZIP")**
+- Enrich missing AI descriptions
 
 -Expected output: pets_created / updated, pets_deactivated, risk_backfilled, mode=WRITE
 
+    cd C:\Users\rossm\woofer\backend
+    .\.venv\Scripts\Activate.ps1
+    python manage.py sync_all --provider rescuegroups --limit 200
 
-	cd C:\Users\rossm\woofer\backend
-	.\.venv\Scripts\Activate.ps1
-	python manage.py sync_all --provider rescuegroups --limit 200
+Optional:
+- Disable geo backfill (rare; useful for debugging):
+    python manage.py sync_all --provider rescuegroups --limit 200 --no-backfill-geo
+
 
 #### Override lock (use cautiously)
 3.) Use --force only when you are confident no other ingestion is running.
@@ -114,28 +123,12 @@ Why this matters:
 
 	curl.exe -H "X-Woofer-Dev-User: web_smoke_user" "http://127.0.0.1:8000/api/v1/pets?limit=5"
 
----------------------------------
 ##### Geo sanity checks (MVP)
+Verify org geos exist after sync_all:
 
-1) Confirm ZIP dataset is loaded:
-  python manage.py shell
-  >>> from adoption.services.zip_geo_service import ZipGeoService
-  >>> ZipGeoService.count_loaded()
-  >>> ZipGeoService.lookup("90066")
-
-2) Confirm orgs have coordinates:
-  python manage.py shell
-  >>> from adoption.models import Organization
-  >>> Organization.objects.filter(latitude__isnull=False, longitude__isnull=False).count()
-
-3) Backfill org geos (if needed)
-- Use this if orgs exist with postal_code but missing lat/lon.
-
-DRY RUN:
-  python manage.py backfill_org_geos --dry-run
-
-WRITE:
-  python manage.py backfill_org_geos
+    python manage.py shell
+    >>> from adoption.models import Organization
+    >>> Organization.objects.filter(latitude__isnull=False, longitude__isnull=False).count()
 
 
 ---------------------------------------

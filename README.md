@@ -76,10 +76,10 @@ python manage.py sync_all --provider rescuegroups --limit 200
 
 _________________________
 #### Canonical Guarantees
-Woofer enforces: 
-- Enveloped API responses, No provider schema leakage, Deterministic ranking + diversity slotting, Idempotent interest application creation, Controlled application handoff payloads, Audit-safe provider sync state
-
-- Deterministic offline geocoding (ZIP → lat/lon) with geo_source auditing and safe overwrite rules
+Woofer enforces:
+ - Enveloped API responses, No provider schema leakage, Deterministic ranking + diversity slotting, Idempotent interest application creation, Controlled application handoff payloads, Audit-safe provider sync state
+	
+ - ZIP-based geo backfill for organizations (enables distance filtering)
 
 
 
