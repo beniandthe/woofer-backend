@@ -32,28 +32,50 @@ class IngestionService:
         if not source or not source_org_id:
             raise ValueError("Organization missing required keys: source, source_org_id")
 
-        postal_raw = (org.get("postal_code", "") or "").strip()
-        postal_norm = ZipGeoService.normalize_zip(postal_raw)
+        postal_code = (org.get("postal_code", "") or "").strip()
 
-        defaults = {
+        # 1) Fetch existing first (so we can decide whether geo is allowed to change)
+        existing = (
+            Organization.objects
+            .filter(source=source, source_org_id=source_org_id)
+            .only("organization_id", "geo_source", "latitude", "longitude", "postal_code")
+            .first()
+        )
+
+        existing_geo_source = (existing.geo_source or "") if existing else ""
+        has_existing_geo = bool(existing and existing.latitude is not None and existing.longitude is not None)
+
+        # 2) Base defaults (non-geo fields always safe to update)
+        defaults: Dict[str, Any] = {
             "name": org.get("name") or (source_org_id or "Unknown Organization"),
             "contact_email": org.get("contact_email"),
             "location": org.get("location") or "Unknown",
-            "postal_code": postal_norm or "",  # store normalized 5-digit ZIP when available
+            "postal_code": postal_code,
             "is_active": bool(org.get("is_active", True)),
         }
 
-        # Offline ZIP centroid geocode (deterministic)
-        geo = ZipGeoService.lookup(postal_norm) if postal_norm else None
-        if geo:
-            defaults.update(
-                {
-                    "latitude": geo.lat,
-                    "longitude": geo.lon,
-                    "geo_source": "ZIP",
-                    "geo_updated_at": timezone.now(),
-                }
-            )
+        # 3) Geo policy:
+        # - If existing geo_source is non-empty and not ZIP, do NOT overwrite.
+        # - Else, we may set/refresh ZIP geo if we have a match.
+        allow_zip_geo = (existing is None) or (existing_geo_source in ("", "ZIP"))
+
+        if allow_zip_geo and postal_code:
+            z = ZipGeoService.normalize_zip(postal_code)
+            if z:
+                hit = ZipGeoService.lookup(z)
+                if hit:
+                    defaults.update(
+                        {
+                            "latitude": hit.lat,
+                            "longitude": hit.lon,
+                            "geo_source": "ZIP",
+                            "geo_updated_at": timezone.now(),
+                        }
+                    )
+                else:
+                    # If we have no geo and no match, leave geo fields untouched.
+                    # (Do NOT null them out.)
+                    pass
 
         obj, created = Organization.objects.update_or_create(
             source=source,
@@ -63,8 +85,6 @@ class IngestionService:
         return obj, created
 
     
-
-
     @staticmethod
     def upsert_pet(pet: Dict[str, Any]) -> Tuple[Optional[Pet], bool, bool]:
         """

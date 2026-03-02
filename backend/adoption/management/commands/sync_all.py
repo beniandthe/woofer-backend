@@ -9,10 +9,18 @@ class Command(BaseCommand):
         parser.add_argument("--limit", type=int, default=200)
         parser.add_argument("--dry-run", action="store_true")
 
+        # Default ON behavior (use disable flag)
+        parser.add_argument(
+            "--no-backfill-geo",
+            action="store_true",
+            help="Disable automatic org geo backfill step after ingest (default is enabled).",
+        )
+
     def handle(self, *args, **opts):
         provider = opts["provider"]
         limit = opts["limit"]
         dry_run = opts["dry_run"]
+        backfill_geo = not opts["no_backfill_geo"]
 
         self.stdout.write(self.style.NOTICE("SyncAll starting..."))
 
@@ -21,6 +29,13 @@ class Command(BaseCommand):
             ingest_args.append("--dry-run")
 
         call_command("ingest_provider", *ingest_args)
+
+        # keep “one command = correct distance feed”
+        if backfill_geo:
+            backfill_args = []
+            if dry_run:
+                backfill_args.append("--dry-run")
+            call_command("backfill_org_geos", *backfill_args)
 
         enrich_args = ["--limit", str(limit)]
         if dry_run:
