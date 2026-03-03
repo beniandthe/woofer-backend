@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Optional, List
-
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 import requests
-
 from providers.base import ProviderClient, ProviderOrg, ProviderPet
 
 
@@ -14,6 +13,21 @@ _JSONAPI = "application/vnd.api+json"
 def _first(lst: Any) -> Optional[Any]:
     return lst[0] if isinstance(lst, list) and lst else None
 
+
+def _upgrade_img_width(url: str, width: int = 800) -> str:
+    """
+    RescueGroups picture URLs often come with ?width=100.
+    For web card display, store a larger width to avoid blur.
+    """
+    try:
+        parts = urlparse(url)
+        qs = parse_qs(parts.query)
+        qs["width"] = [str(int(width))]
+        new_query = urlencode(qs, doseq=True)
+        return urlunparse((parts.scheme, parts.netloc, parts.path, parts.params, new_query, parts.fragment))
+    except Exception:
+        return url
+ 
 
 class RescueGroupsAPIError(RuntimeError):
     pass
@@ -227,7 +241,7 @@ class RescueGroupsClient(ProviderClient):
             photos: List[str] = []
             thumb = attrs.get("pictureThumbnailUrl")
             if thumb:
-                photos.append(str(thumb))
+                photos.append(_upgrade_img_width(str(thumb), width=800))
 
             out.append(
                 ProviderPet(
