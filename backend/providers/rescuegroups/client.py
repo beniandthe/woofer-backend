@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, Optional, List
-
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 import requests
-
 from providers.base import ProviderClient, ProviderOrg, ProviderPet
 
 
@@ -14,6 +13,55 @@ _JSONAPI = "application/vnd.api+json"
 def _first(lst: Any) -> Optional[Any]:
     return lst[0] if isinstance(lst, list) and lst else None
 
+
+def _upgrade_img_width(url: str, width: int = 800) -> str:
+    """
+    RescueGroups picture URLs often come with ?width=100.
+    For web card display, store a larger width to avoid blur.
+    """
+    try:
+        parts = urlparse(url)
+        qs = parse_qs(parts.query)
+        qs["width"] = [str(int(width))]
+        new_query = urlencode(qs, doseq=True)
+        return urlunparse((parts.scheme, parts.netloc, parts.path, parts.params, new_query, parts.fragment))
+    except Exception:
+        return url
+ 
+def _pick_picture_url(attrs: Dict[str, Any]) -> Optional[str]:
+    """
+    RescueGroups included pictures commonly use dicts:
+      attrs["large"] = {"url": "...", "resolutionX": ..., ...}
+    Sometimes they may be strings. Support both.
+    Prefer large, then original, then small.
+    """
+    if not isinstance(attrs, dict):
+        return None
+
+    for k in ("large", "original", "small"):
+        v = attrs.get(k)
+
+        # string form
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+
+        # dict form
+        if isinstance(v, dict):
+            url = v.get("url") or v.get("uri") or v.get("href")
+            if isinstance(url, str) and url.strip():
+                return url.strip()
+
+    return None
+
+def _dedupe_keep_order(urls: List[str]) -> List[str]:
+    seen = set()
+    out = []
+    for u in urls:
+        if u in seen:
+            continue
+        seen.add(u)
+        out.append(u)
+    return out
 
 class RescueGroupsAPIError(RuntimeError):
     pass
@@ -109,7 +157,7 @@ class RescueGroupsClient(ProviderClient):
                     "limit": chunk,
                     "page": page,
                     "include": "pictures,orgs",
-                    "fields[animals]": "name,descriptionText,sex,sizeGroup,ageGroup,isBreedMixed,breedPrimary,breedSecondary,updatedDate,createdDate,availableDate,pictureThumbnailUrl,pictureCount,orgs",
+                    "fields[animals]": "name,descriptionText,sex,sizeGroup,ageGroup,isBreedMixed,breedPrimary,breedSecondary,updatedDate,createdDate,availableDate,pictureThumbnailUrl,pictureCount,orgs,pictures", 
                     },
                 )
 
@@ -173,20 +221,31 @@ class RescueGroupsClient(ProviderClient):
             return []
 
         included = payload.get("included") or []
-        # Build picture lookup - animal_id to [picture_urls]
-        pic_urls_by_animal: Dict[str, List[str]] = {}
+
+        pic_meta_by_id: Dict[str, tuple[int, str]] = {}
+
         if isinstance(included, list):
             for inc in included:
                 if not isinstance(inc, dict):
                     continue
                 if inc.get("type") != "pictures":
                     continue
+                pic_id = str(inc.get("id") or "").strip()
+                if not pic_id:
+                    continue
+
                 attrs = inc.get("attributes") or {}
-        
-                # link when the animal object includes pictures relationship, else ignore
-                # keep URLs available by picture id, the animal parser will assemble via relationship.
-                # Handled below
-                pass
+                url = _pick_picture_url(attrs)
+                if not url:
+                    continue
+
+                # default order high if missing
+                try:
+                    order = int(attrs.get("order") or 9999)
+                except (TypeError, ValueError):
+                    order = 9999
+
+                pic_meta_by_id[pic_id] = (order, _upgrade_img_width(url, width=800))
 
         out: List[ProviderPet] = []
 
@@ -196,14 +255,7 @@ class RescueGroupsClient(ProviderClient):
             attrs = row.get("attributes") or {}
             rel = row.get("relationships") or {}
 
-            apply_url = (
-                attrs.get("url")
-                or attrs.get("animalUrl")
-                or attrs.get("adoptionUrl")
-                or attrs.get("adoptUrl")
-                or None
-            )
-
+            # org id extraction unchanged...
             external_org_id = None
             org_rel = (
                 rel.get("orgs")
@@ -223,19 +275,44 @@ class RescueGroupsClient(ProviderClient):
                 elif isinstance(org_data, dict) and org_data.get("id"):
                     external_org_id = str(org_data["id"])
 
-            # Pictures - prefer pictureThumbnailUrl, otherwise include pictures relationship if present
+            # Build photos: relationship pictures -> included urls, plus thumb fallback
             photos: List[str] = []
-            thumb = attrs.get("pictureThumbnailUrl")
-            if thumb:
-                photos.append(str(thumb))
 
+            pics_rel = rel.get("pictures")
+            if isinstance(pics_rel, dict):
+                pics_data = pics_rel.get("data") or []
+                if isinstance(pics_data, dict):
+                    pics_data = [pics_data]
+                if isinstance(pics_data, list):
+                    collected: List[tuple[int, str]] = []
+                    for ref in pics_data:
+                        if not isinstance(ref, dict):
+                            continue
+                        pic_id = ref.get("id")
+                        if not pic_id:
+                            continue
+                        meta = pic_meta_by_id.get(str(pic_id))
+                        if meta:
+                            collected.append(meta)
+
+                    collected.sort(key=lambda t: t[0]) 
+                    photos.extend([u for _, u in collected])
+
+            # Fallback thumbnail if relationship didn't yield anything
+            thumb = attrs.get("pictureThumbnailUrl")
+            if thumb and not photos:
+                photos.append(_upgrade_img_width(str(thumb), width=800))
+
+            photos = _dedupe_keep_order(photos)
+
+            # ...create ProviderPet as before, but now with photos list
             out.append(
                 ProviderPet(
                     provider=self.provider_name,
                     external_pet_id=str(row.get("id")),
                     external_org_id=external_org_id,
                     name=str(attrs.get("name") or "").strip() or "Unknown",
-                    species="DOG",  # MVP: dogs endpoint
+                    species="DOG",
                     age_group=_map_age_group(attrs.get("ageGroup")),
                     size=_map_size(attrs.get("sizeGroup")),
                     sex=_map_sex(attrs.get("sex")),
@@ -245,12 +322,13 @@ class RescueGroupsClient(ProviderClient):
                     photos=photos,
                     raw_description=attrs.get("descriptionText") or "",
                     listed_at_iso=attrs.get("availableDate") or attrs.get("createdDate") or attrs.get("updatedDate"),
-                    status="Available",  # mapper normalizes to ACTIVE
-                    apply_url=str(apply_url).strip() if apply_url else None,
-                    apply_hint="Apply via RescueGroups" if apply_url else None,
+                    status="Available",
+                    apply_url=(str(attrs.get("url")).strip() if attrs.get("url") else None),
+                    apply_hint="Apply via RescueGroups" if attrs.get("url") else None,
                     raw=row,
                 )
             )
+
         return out
 
 

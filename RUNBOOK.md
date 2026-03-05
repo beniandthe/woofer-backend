@@ -73,7 +73,7 @@ Fetches, ingests, deactivates missing pets, backfills risk flags,
 - Mark missing pets INACTIVE
 - Update last_seen_at
 - Backfill risk flags
-- **Backfill org latitude/longitude from postal_code (geo_source="ZIP")**
+- Backfill org latitude/longitude from postal_code (geo_source="ZIP")
 - Enrich missing AI descriptions
 
 -Expected output: pets_created / updated, pets_deactivated, risk_backfilled, mode=WRITE

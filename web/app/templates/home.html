@@ -40,6 +40,23 @@
     {% for pet in items %}
     <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
         <strong>{{ pet.name }}</strong>
+        {% if pet.photos and pet.photos.0 %}
+        <div style="margin-top: 8px; width: 320px; max-width: 100%; height: 200px; overflow: hidden; border-radius: 10px; border: 1px solid #333; background: #f2f2f2;">
+            <img src="{{ pet.photos.0 }}"
+                 alt="Photo of {{ pet.name }}"
+                 style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                 loading="lazy"
+                 decoding="async"
+                 fetchpriority="low"
+                 referrerpolicy="no-referrer" />
+        </div>
+        {% else %}
+        <div style="margin-top: 8px;">
+            <div style="width: 320px; max-width: 100%; height: 200px; border-radius: 10px; border: 1px dashed #999; display:flex; align-items:center; justify-content:center;">
+                <small>No photo yet</small>
+            </div>
+        </div>
+        {% endif %}
         {% if pet.organization %}
         — <em>{{ pet.organization.name }}</em>
         {% endif %}

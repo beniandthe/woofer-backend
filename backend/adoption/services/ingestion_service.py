@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple, List
 from django.db import transaction
 from django.utils import timezone
 from adoption.services.pet_enrichment_service import PetEnrichmentService
@@ -121,6 +121,8 @@ class IngestionService:
         # Descriptions (raw + AI) 
         raw_desc = pet.get("raw_description") or ""
         ai_desc = pet.get("ai_description")
+        raw_photos = pet.get("photos") or []
+        photos = [u.strip() for u in raw_photos if isinstance(u, str) and u.strip()]
 
         defaults = {
             "organization": org,
@@ -132,7 +134,7 @@ class IngestionService:
             "breed_primary": pet.get("breed_primary"),
             "breed_secondary": pet.get("breed_secondary"),
             "is_mixed": bool(pet.get("is_mixed", False)),
-            "photos": pet.get("photos") or [],
+            "photos": photos,
             "raw_description": raw_desc,
             "listed_at": listed_at,
             "status": pet.get("status") or "ACTIVE",
