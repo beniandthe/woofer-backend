@@ -9,5 +9,6 @@ urlpatterns = [
     path("applications/", views.applications, name="applications"),
     path("pets/<uuid:pet_id>/pass/", views.pass_pet, name="pass_pet"),
     path("interests/", views.interests, name="interests"),
+    path("pets/<uuid:pet_id>/", views.pet_detail, name="pet_detail"),
 
 ]

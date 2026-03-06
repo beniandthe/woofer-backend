@@ -229,3 +229,25 @@ def interests(request):
             status=502,
         )
 
+def pet_detail(request, pet_id):
+    api_result = None
+    pet = None
+    error = None
+
+    try:
+        api_result = api_get(f"/api/v1/pets/{pet_id}")
+        pet = (api_result or {}).get("data") or None
+    except WooferAPIError as e:
+        payload = e.payload if isinstance(e.payload, dict) else None
+        api_result = payload
+        error = (payload or {}).get("error") or {"message": str(e)}
+
+    return render(
+        request,
+        "pet_detail.html",
+        {
+            "api_result": api_result,
+            "pet": pet,
+            "error": error,
+        },
+    )
