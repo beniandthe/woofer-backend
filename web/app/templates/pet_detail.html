@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<body style="font-family: system-ui, sans-serif; margin: 0; padding: 24px; max-width: 960px;">
+    <p style="margin-top: 0;">
+        <a href="/">← Back to feed</a> |
+        <a href="/interests/">Saved</a> |
+        <a href="/applications/">My Applications</a> |
+        <a href="/profile/">Profile</a>
+    </p>
+
+    {% if api_result.ok %}
+    {% with pet=api_result.data %}
+    <h1 style="margin-bottom: 8px;">{{ pet.name }}</h1>
+
+    {% if pet.organization %}
+    <p style="margin-top: 0;">
+        <em>{{ pet.organization.name }}</em>{% if pet.organization.location %} — {{ pet.organization.location }}{% endif %}
+    </p>
+    {% endif %}
+
+    {% if pet.photos and pet.photos.0 %}
+    <div style="width: 720px; max-width: 100%;">
+        <div style="width: 100%; height: 420px; overflow: hidden; border-radius: 12px; border: 1px solid #333; background: #f2f2f2;">
+            <img src="{{ pet.photos.0 }}"
+                 alt="Photo of {{ pet.name }}"
+                 style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                 loading="eager"
+                 decoding="async"
+                 referrerpolicy="no-referrer" />
+        </div>
+
+        {% if pet.photos|length > 1 %}
+        <div style="margin-top: 10px; display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;">
+            {% for url in pet.photos %}
+            {% if not forloop.first %}
+            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" style="flex: 0 0 auto;">
+                <img src="{{ url }}"
+                     alt="Thumbnail for {{ pet.name }}"
+                     style="width: 110px; height: 82px; object-fit: cover; border-radius: 10px; border: 1px solid #333; display: block;"
+                     loading="lazy"
+                     decoding="async"
+                     referrerpolicy="no-referrer" />
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div style="width: 720px; max-width: 100%; height: 420px; border-radius: 12px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center;">
+        <small>No photo yet</small>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 16px;">
+        <p>
+            {% if pet.age_group %}<strong>Age:</strong> {{ pet.age_group }}{% endif %}
+            {% if pet.size %} | <strong>Size:</strong> {{ pet.size }}{% endif %}
+            {% if pet.sex %} | <strong>Sex:</strong> {{ pet.sex }}{% endif %}
+        </p>
+
+        {% if pet.ai_description %}
+        <p><strong>About:</strong> {{ pet.ai_description }}</p>
+        {% endif %}
+
+        {% if pet.temperament_tags %}
+        <div style="margin-top: 8px;">
+            {% for t in pet.temperament_tags %}
+            <span style="display: inline-block; padding: 2px 8px; margin: 2px; border: 1px solid #999; border-radius: 999px;">
+                {{ t }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if pet.raw_description %}
+        <div style="margin-top: 10px; white-space: pre-wrap;">
+            <small>{{ pet.raw_description }}</small>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        {% if pet.apply_url %}
+        <a href="{{ pet.apply_url }}" target="_blank" rel="noopener noreferrer">
+            <button type="button">Apply</button>
+        </a>
+        {% if pet.apply_hint %}
+        <small>{{ pet.apply_hint }}</small>
+        {% endif %}
+        {% else %}
+        <small>{{ pet.apply_hint|default:"Apply via the rescue directly (link not provided)." }}</small>
+        {% endif %}
+    </div>
+    {% endwith %}
+    {% else %}
+    <h1>Pet</h1>
+    <p><strong>API returned ok=false</strong></p>
+    <pre style="white-space: pre-wrap;">{{ api_result }}</pre>
+    {% endif %}
+</body>
+</html>
