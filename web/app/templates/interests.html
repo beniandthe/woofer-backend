@@ -19,7 +19,9 @@
         {% for interest in items %}
         {% with pet=interest.pet %}
         <li style="margin-bottom: 16px; padding: 12px; border: 1px solid #333; border-radius: 10px;">
-            <strong>{{ pet.name|default:"(Unnamed pet)" }}</strong>
+            <a href="/pets/{{ pet.pet_id }}/">
+                {{ pet.name }}
+            </a>
             {% if pet.organization %}
             — <em>{{ pet.organization.name }}{% if pet.organization.location %} ({{ pet.organization.location }}){% endif %}</em>
             {% endif %}
