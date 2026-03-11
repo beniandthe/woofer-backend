@@ -1,73 +1,76 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8" />
     <title>Woofer - Profile</title>
-  </head>
-  <body>
-      <p>
-          <a href="/">Home</a> |
-          <a href="/foster/">Foster</a> |
-          <a href="/learn/">Learn</a> |
-          <a href="/stories/">Stories</a> |
-          <a href="/interests/">Saved</a> |
-          <a href="/applications/">My Applications</a> |
-      </p>
-      <h1>Profile</h1>
+</head>
+<body style="font-family: system-ui, sans-serif; margin: 0; padding: 24px; max-width: 960px;">
+    <p style="margin-top: 0;">
+        <a href="/">Home</a> |
+        <a href="/foster/">Foster</a> |
+        <a href="/learn/">Learn</a> |
+        <a href="/stories/">Stories</a> |
+        <a href="/interests/">Saved</a> |
+        <a href="/applications/">My Applications</a> |
+        <a href="/profile/">Profile</a>
+    </p>
 
-      {% if msg %}
-      <p><strong>{{ msg }}</strong></p>
-      {% endif %}
+    <h1>Profile</h1>
 
-      <form method="post">
-          {% csrf_token %}
+    {% if msg %}
+    <p><strong>{{ msg }}</strong></p>
+    {% endif %}
 
-          <label>Home type</label>
-          <select name="home_type">
-              <option value="APARTMENT" {% if profile.home_type= ="APARTMENT" %}selected{% endif %}>Apartment</option>
-              <option value="HOUSE" {% if profile.home_type= ="HOUSE" %}selected{% endif %}>House</option>
-              <option value="OTHER" {% if profile.home_type= ="OTHER" %}selected{% endif %}>Other</option>
-          </select>
+    <form method="post">
+        {% csrf_token %}
 
-          <p>
-              <label><input type="checkbox" name="has_kids" {% if profile.has_kids %}checked{% endif %}> Has kids</label><br />
-              <label><input type="checkbox" name="has_dogs" {% if profile.has_dogs %}checked{% endif %}> Has dogs</label><br />
-              <label><input type="checkbox" name="has_cats" {% if profile.has_cats %}checked{% endif %}> Has cats</label>
-          </p>
+        <label>Home type</label>
+        <select name="home_type">
+            <option value="APARTMENT" {% if profile.home_type == "APARTMENT" %}selected{% endif %}>Apartment</option>
+            <option value="HOUSE" {% if profile.home_type == "HOUSE" %}selected{% endif %}>House</option>
+            <option value="OTHER" {% if profile.home_type == "OTHER" %}selected{% endif %}>Other</option>
+        </select>
 
-          <label>Activity level</label>
-          <select name="activity_level">
-              <option value="LOW" {% if profile.activity_level= ="LOW" %}selected{% endif %}>Low</option>
-              <option value="MED" {% if profile.activity_level= ="MED" %}selected{% endif %}>Medium</option>
-              <option value="HIGH" {% if profile.activity_level= ="HIGH" %}selected{% endif %}>High</option>
-          </select>
+        <p>
+            <label><input type="checkbox" name="has_kids" {% if profile.has_kids %}checked{% endif %}> Has kids</label><br />
+            <label><input type="checkbox" name="has_dogs" {% if profile.has_dogs %}checked{% endif %}> Has dogs</label><br />
+            <label><input type="checkbox" name="has_cats" {% if profile.has_cats %}checked{% endif %}> Has cats</label><br />
+            <label><input type="checkbox" name="open_to_foster" {% if profile.preferences.open_to_foster %}checked{% endif %}> Open to fostering</label>
+        </p>
 
-          <br /><br />
+        <label>Activity level</label>
+        <select name="activity_level">
+            <option value="LOW" {% if profile.activity_level == "LOW" %}selected{% endif %}>Low</option>
+            <option value="MED" {% if profile.activity_level == "MED" %}selected{% endif %}>Medium</option>
+            <option value="HIGH" {% if profile.activity_level == "HIGH" %}selected{% endif %}>High</option>
+        </select>
 
-          <label>Experience level</label>
-          <select name="experience_level">
-              <option value="NEW" {% if profile.experience_level= ="NEW" %}selected{% endif %}>New</option>
-              <option value="SOME" {% if profile.experience_level= ="SOME" %}selected{% endif %}>Some</option>
-              <option value="EXPERIENCED" {% if profile.experience_level= ="EXPERIENCED" %}selected{% endif %}>Experienced</option>
-          </select>
+        <br /><br />
 
-          <br /><br />
+        <label>Experience level</label>
+        <select name="experience_level">
+            <option value="NEW" {% if profile.experience_level == "NEW" %}selected{% endif %}>New</option>
+            <option value="SOME" {% if profile.experience_level == "SOME" %}selected{% endif %}>Some</option>
+            <option value="EXPERIENCED" {% if profile.experience_level == "EXPERIENCED" %}selected{% endif %}>Experienced</option>
+        </select>
 
-          <label>Home ZIP / Postal Code</label>
-          <input type="text" name="home_postal_code" value="{{ profile.home_postal_code|default:'' }}" />
+        <br /><br />
 
-          <br /><br />
+        <label>Home ZIP / Postal Code</label>
+        <input type="text" name="home_postal_code" value="{{ profile.home_postal_code|default:'' }}" />
 
-          <label>Max distance (miles)</label>
-          <input type="number"
-                 name="max_distance_miles"
-                 min="1"
-                 max="1000"
-                 value="{{ profile.preferences.max_distance_miles|default:'' }}" />
+        <br /><br />
 
-          <br /><br />
+        <label>Max distance (miles)</label>
+        <input type="number"
+               name="max_distance_miles"
+               min="1"
+               max="1000"
+               value="{{ profile.preferences.max_distance_miles|default:'' }}" />
 
-          <button type="submit">Save</button>
-      </form>
-  </body>
+        <br /><br />
+
+        <button type="submit">Save</button>
+    </form>
+</body>
 </html>

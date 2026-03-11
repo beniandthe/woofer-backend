@@ -150,15 +150,23 @@ def profile(request):
     """
     try:
         if request.method == "POST":
+            current_profile_result = api_get("/api/v1/profile")
+            current_profile = current_profile_result.get("data", {}) or {}
+            existing_preferences = current_profile.get("preferences", {}) or {}
+
             max_distance_raw = request.POST.get("max_distance_miles", "").strip()
 
-            preferences = {}
+            preferences = dict(existing_preferences)
+
             if max_distance_raw:
                 try:
                     preferences["max_distance_miles"] = int(max_distance_raw)
                 except ValueError:
-                    # MVP: ignore invalid input
-                    preferences = {}
+                    preferences.pop("max_distance_miles", None)
+            else:
+                preferences.pop("max_distance_miles", None)
+
+            preferences["open_to_foster"] = request.POST.get("open_to_foster") == "on"
 
             payload = {
                 "home_type": request.POST.get("home_type") or "OTHER",
@@ -253,7 +261,23 @@ def pet_detail(request, pet_id):
     )
 
 def foster(request):
-    return render(request, "foster.html")
+    try:
+        api_result = api_get("/api/v1/profile")
+        profile = api_result.get("data", {}) or {}
+        preferences = profile.get("preferences", {}) or {}
+        foster_open = bool(preferences.get("open_to_foster", False))
+
+        return render(request, "foster.html", {
+            "profile": profile,
+            "foster_open": foster_open,
+        })
+    except WooferAPIError as e:
+        return render(
+            request,
+            "error.html",
+            {"status_code": e.status_code, "payload": e.payload},
+            status=502,
+        )
 
 def learn(request):
     return render(request, "learn.html")

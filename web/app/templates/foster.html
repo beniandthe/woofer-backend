@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>Woofer - Foster</title>
 </head>
-<body>
-    <p>
+<body style="font-family: system-ui, sans-serif; margin: 0; padding: 24px; max-width: 960px;">
+    <p style="margin-top: 0;">
         <a href="/">Home</a> |
         <a href="/foster/">Foster</a> |
         <a href="/learn/">Learn</a> |
@@ -15,24 +15,76 @@
         <a href="/profile/">Profile</a>
     </p>
 
-    <h1>Foster</h1>
+    <h1 style="margin-bottom: 8px;">Foster</h1>
 
-    <p>
-        Fostering gives pets a bridge home while helping rescues learn what they need to thrive.
+    <p style="max-width: 760px;">
+        Fostering gives pets a bridge home while helping rescues understand what they need to thrive.
+        It is one of the most immediate ways to help, even if you are not ready to adopt permanently.
     </p>
 
-    <p>
-        Woofer will expand beyond adoption to support fostering as a first-class path for people who want to help, even if they are not ready to adopt permanently yet.
-    </p>
+    <div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="#what-it-means" style="padding: 8px 12px; border: 1px solid #999; border-radius: 999px; text-decoration: none; color: inherit;">What fostering means</a>
+        <a href="#why-it-matters" style="padding: 8px 12px; border: 1px solid #999; border-radius: 999px; text-decoration: none; color: inherit;">Why it matters</a>
+        <a href="#who-its-for" style="padding: 8px 12px; border: 1px solid #999; border-radius: 999px; text-decoration: none; color: inherit;">Who it’s for</a>
+        <a href="/profile/" style="padding: 8px 12px; border: 1px solid #333; border-radius: 999px; text-decoration: none; color: inherit;">Update my profile</a>
+    </div>
 
-    <ul>
-        <li>Learn what fostering involves</li>
-        <li>Understand time and care expectations</li>
-        <li>See how fostering can help overlooked pets get home faster</li>
-    </ul>
+    <hr style="margin: 24px 0;" />
 
-    <p>
-        This surface is the foundation for Woofer’s foster experience.
-    </p>
+    <section id="what-it-means" style="margin-bottom: 32px;">
+        <h2>What fostering means</h2>
+        <p>
+            Fostering is temporary care. A rescue or shelter still manages placement, while a foster home helps a pet decompress, stay safe, and show more of their real personality in a home environment.
+        </p>
+        <ul>
+            <li>Some fosters are short-term and focused on transition.</li>
+            <li>Some last longer while a pet waits for the right adopter.</li>
+            <li>Many rescues use fostering to learn behavior, routine, and compatibility insights.</li>
+        </ul>
+    </section>
+
+    <section id="why-it-matters" style="margin-bottom: 32px;">
+        <h2>Why it matters</h2>
+        <p>
+            A strong foster placement can help an overlooked pet become more visible, more understood, and easier to match responsibly.
+        </p>
+        <ul>
+            <li>Pets often show better in a home than in a stressful kennel setting.</li>
+            <li>Rescues can make better decisions with real foster observations.</li>
+            <li>Fostering can directly increase a pet’s chance of finding the right long-term home.</li>
+        </ul>
+    </section>
+
+    <section id="who-its-for" style="margin-bottom: 32px;">
+        <h2>Who it’s for</h2>
+        <p>
+            Fostering may be a fit if you want to help but are not ready to adopt permanently, or if you want to support rescues in a more active way.
+        </p>
+        <ul>
+            <li>People exploring adoption more gradually</li>
+            <li>People with flexible space or routine</li>
+            <li>People who want to support rescue work directly</li>
+            <li>Experienced adopters who want to help pets transition into home life</li>
+        </ul>
+    </section>
+
+    {% if foster_open %}
+    <div style="margin-top: 24px; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #f6fff6;">
+        <strong>Your profile says you are open to fostering.</strong>
+        <div style="margin-top: 6px;">
+            This will help shape future Woofer foster features and matching surfaces.
+        </div>
+    </div>
+    {% else %}
+    <div style="margin-top: 24px; padding: 12px; border: 1px dashed #999; border-radius: 10px;">
+        <strong>Interested in fostering?</strong>
+        <div style="margin-top: 6px;">
+            You can mark yourself as open to fostering in your profile.
+        </div>
+        <div style="margin-top: 10px;">
+            <a href="/profile/">Go to Profile</a>
+        </div>
+    </div>
+    {% endif %}
 </body>
 </html>
