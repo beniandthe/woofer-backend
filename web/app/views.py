@@ -251,3 +251,12 @@ def pet_detail(request, pet_id):
             "error": error,
         },
     )
+
+def foster(request):
+    return render(request, "foster.html")
+
+def learn(request):
+    return render(request, "learn.html")
+
+def stories(request):
+    return render(request, "stories.html")
