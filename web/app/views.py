@@ -286,3 +286,7 @@ def learn(request):
 
 def stories(request):
     return render(request, "stories.html")
+
+def community(request):
+    return render(request, "community.html")
+

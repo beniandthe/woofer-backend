@@ -13,5 +13,5 @@ urlpatterns = [
     path("foster/", views.foster, name="foster"),
     path("learn/", views.learn, name="learn"),
     path("stories/", views.stories, name="stories"),
-
+    path("community/", views.community, name="community"),
 ]
