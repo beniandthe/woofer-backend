@@ -1,8 +1,14 @@
 <!doctype html>
 <html>
+<head>
+    <meta charset="utf-8" />
+    <title>
+        {% if pet %}Woofer - {{ pet.name }}{% else %}Woofer - Pet{% endif %}
+    </title>
+</head>
 <body style="font-family: system-ui, sans-serif; margin: 0; padding: 24px; max-width: 960px;">
     <p style="margin-top: 0;">
-        <a href="/">← Back to feed</a> |
+        <a href="/">Back to feed</a> |
         <a href="/foster/">Foster</a> |
         <a href="/learn/">Learn</a> |
         <a href="/stories/">Stories</a> |
@@ -11,8 +17,11 @@
         <a href="/profile/">Profile</a>
     </p>
 
-    {% if api_result.ok %}
-    {% with pet=api_result.data %}
+    {% if error %}
+    <h1>Could not load pet</h1>
+    <pre style="white-space: pre-wrap;">{{ error }}</pre>
+
+    {% elif pet %}
     <h1 style="margin-bottom: 8px;">{{ pet.name }}</h1>
 
     {% if pet.organization %}
@@ -95,10 +104,36 @@
         <small>{{ pet.apply_hint|default:"Apply via the rescue directly (link not provided)." }}</small>
         {% endif %}
     </div>
-    {% endwith %}
+
+    <hr style="margin: 28px 0;" />
+
+    <section>
+        <h2 style="margin-bottom: 10px;">Share this pet</h2>
+        <p style="max-width: 720px;">
+            Help this pet get seen by sending their page to a friend, partner, or family member.
+        </p>
+
+        <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            <input id="share-url"
+                   type="text"
+                   value="{{ share_url }}"
+                   readonly
+                   style="width: 520px; max-width: 100%; padding: 8px; border: 1px solid #999; border-radius: 8px;" />
+
+            <button type="button"
+                    onclick="navigator.clipboard.writeText(document.getElementById('share-url').value)">
+                Copy link
+            </button>
+
+            <a href="mailto:?subject=Meet {{ pet.name|urlencode }} on Woofer&body=I thought you might want to see this pet:%20{{ share_url|urlencode }}">
+                Email this pet
+            </a>
+        </div>
+    </section>
+
     {% else %}
-    <h1>Pet</h1>
-    <p><strong>API returned ok=false</strong></p>
+    <h1>Pet not found</h1>
+    <p>No pet data returned.</p>
     <pre style="white-space: pre-wrap;">{{ api_result }}</pre>
     {% endif %}
 </body>

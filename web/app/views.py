@@ -241,6 +241,7 @@ def pet_detail(request, pet_id):
     api_result = None
     pet = None
     error = None
+    share_url = request.build_absolute_uri()
 
     try:
         api_result = api_get(f"/api/v1/pets/{pet_id}")
@@ -257,6 +258,7 @@ def pet_detail(request, pet_id):
             "api_result": api_result,
             "pet": pet,
             "error": error,
+            "share_url": share_url,
         },
     )
 
